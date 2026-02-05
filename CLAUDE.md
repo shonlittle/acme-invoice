@@ -47,6 +47,17 @@ Before implementing anything:
 
 Do NOT attempt a one-shot implementation. Work in **small, reviewable slices**.
 
+Recommended slice order:
+
+1. Scaffolding + models + pipeline skeleton + CLI + logging (no business logic).
+2. SQLite DB init + seeding (schema from README); smoke test.
+3. Validation stage + unit tests for each rule.
+4. Ingestion for easiest formats first (JSON/CSV/TXT) + smoke script for sample inputs.
+5. Approval stage with reflection/critique loop + tests for revision behavior.
+6. Payment stage with `mock_payment` + ensure payment gated on approval.
+7. PDF ingestion last (minimal text extraction + reuse TXT heuristics).
+8. Polish: “run all samples” helper, README updates, tighten logs/tests.
+
 **Stop after each slice** and summarize:
 
 - files changed/added
@@ -59,7 +70,15 @@ Prefer a simple, explicit module structure, e.g.:
 
 - `main.py` (CLI entrypoint)
 - `models.py` (dataclasses or Pydantic models)
+- `pipeline/runner.py` (orchestrator)
+- `agents/ingest.py`
+- `agents/validate.py`
+- `agents/approve.py`
+- `agents/pay.py`
+- `db/inventory.py` (init + query helpers)
 - `utils/logging.py` (structured logging helpers)
+
+Keep state passing explicit via a `PipelineContext` object.
 
 ## Logging & Observability
 
