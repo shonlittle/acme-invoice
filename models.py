@@ -6,7 +6,23 @@ Enhanced to support price validation, vendor checks, and financial calculations.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Dict, List, Optional
+
+
+@dataclass
+class ParseMetadata:
+    """
+    Metadata about the parsing process for observability.
+
+    Fields:
+    - parse_warnings: List of warnings encountered during parsing
+    - field_provenance: Where each field came from (e.g., "json.vendor.name")
+    - confidence_scores: Confidence level per field (LOW/MED/HIGH)
+    """
+
+    parse_warnings: List[str] = field(default_factory=list)
+    field_provenance: Dict[str, str] = field(default_factory=dict)
+    confidence_scores: Dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -120,6 +136,7 @@ class PipelineContext:
 
     invoice_path: str
     invoice: Optional[Invoice] = None
+    parse_metadata: Optional[ParseMetadata] = None
     validation_findings: List[ValidationFinding] = field(default_factory=list)
     approval_decision: Optional[ApprovalDecision] = None
     payment_result: Optional[dict] = None
