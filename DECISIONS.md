@@ -133,4 +133,75 @@ See `llm/client.py` for interface design.
 
 ---
 
-**Last Updated:** 2026-02-05 09:24
+## Decision #4: Database File Location (db/ vs Root)
+
+**Date:** 2026-02-05  
+**Status:** Accepted  
+**Context:** Initial implementation placed `inventory.db` in project root, violating best practices
+
+### Problem
+
+Original implementation created database file at project root:
+
+```
+/
+├── inventory.db  ❌ (pollutes project root)
+├── db/
+│   ├── schema.py
+│   └── inventory.py
+```
+
+**Issues:**
+
+- Clutters project root directory
+- Risk of accidental git commits
+- Poor separation of concerns (data mixed with code)
+- Not production-ready structure
+
+### Decision
+
+**Move database to `db/inventory.db`**
+
+### Rationale
+
+- **Co-location:** Database file lives with database code (`db/schema.py`, `db/inventory.py`)
+- **Clean root:** Project root stays focused on configuration and entry points
+- **Git safety:** Clear `.gitignore` pattern (`db/*.db`)
+- **Industry standard:** Common Python project convention
+- **Semantic clarity:** `db/` directory signals "this is database storage"
+
+### Implementation
+
+1. Changed default path in all `db/inventory.py` functions:
+
+   ```python
+   def init_database(db_path: str = "db/inventory.db") -> None:
+   ```
+
+2. Updated `.gitignore`:
+
+   ```
+   # Database files
+   db/*.db
+   inventory.db  # Also exclude legacy root location
+   ```
+
+3. Updated smoke test to use `db/test_inventory.db`
+
+### Trade-offs
+
+**Pros:**
+
+- Cleaner project structure
+- Better separation of concerns
+- Follows Python best practices
+- Easier to manage in production
+
+**Cons:**
+
+- Breaking change (old `inventory.db` at root won't be found)
+- Requires path update in any existing tooling
+
+---
+
+**Last Updated:** 2026-02-05 10:40
