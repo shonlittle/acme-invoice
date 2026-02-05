@@ -158,3 +158,21 @@ Make it easy to evaluate:
   - commands
   - assumptions/limitations (especially PDF parsing)
   - architecture overview
+
+## Additional Context
+
+This repository represents a **take-home delivery exercise** simulating how a Forward Deployed Engineer at Galatiq.ai might:
+
+- scope an ambiguous customer workflow
+- design an agentic system
+- deliver a working prototype quickly
+- balance correctness, clarity, and pragmatism
+
+Design choices prioritize:
+
+- explicit architecture over cleverness
+- debuggability and observability
+- graceful degradation (e.g., optional Grok usage)
+- ease of evaluation by reviewers
+
+Where requirements are ambiguous, reasonable assumptions are made and documented.
