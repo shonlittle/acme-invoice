@@ -13,15 +13,15 @@
 - [x] Create output directory structure
 - [x] Test end-to-end with sample invoice
 
-## Slice 2: SQLite DB Init + Seeding
+## Slice 2: SQLite DB Init + Seeding ✓
 
-- [ ] Implement database initialization script
-- [ ] Create enhanced inventory table with pricing
-- [ ] Create vendors table with trust flags
-- [ ] Seed inventory with test data (WidgetA, WidgetB, GadgetX, FakeItem)
-- [ ] Seed vendors with test data (Widgets Inc., Precision Parts, etc.)
-- [ ] Write smoke test for DB creation
-- [ ] Write query helper functions for validation stage
+- [x] Implement database initialization script
+- [x] Create enhanced inventory table with pricing
+- [x] Create vendors table with trust flags
+- [x] Seed inventory with test data (WidgetA, WidgetB, GadgetX, FakeItem)
+- [x] Seed vendors with test data (Widgets Inc., Precision Parts, etc.)
+- [x] Write smoke test for DB creation
+- [ ] Write query helper functions for validation stage (deferred to Slice 3)
 
 ## Slice 3: Validation Stage + Unit Tests
 
@@ -96,5 +96,5 @@
 
 ---
 
-**Current Status:** Slice 1 complete ✓ | Ready for Slice 2 (DB Init + Seeding)
-**Last Updated:** 2026-02-05 08:18
+**Current Status:** Slice 2 complete ✓ | Ready for Slice 3 (Validation Rules)
+**Last Updated:** 2026-02-05 09:56
