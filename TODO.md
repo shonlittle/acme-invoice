@@ -23,18 +23,18 @@
 - [x] Write smoke test for DB creation
 - [ ] Write query helper functions for validation stage (deferred to Slice 3)
 
-## Slice 3: Validation Stage + Unit Tests
+## Slice 3: Validation Stage + Unit Tests ✓
 
-- [ ] Implement validation rule: unknown_item
-- [ ] Implement validation rule: negative_quantity
-- [ ] Implement validation rule: quantity_exceeds_stock
-- [ ] Implement validation rule: out_of_stock
-- [ ] Implement validation rule: price_mismatch
-- [ ] Implement validation rule: unknown_vendor
-- [ ] Implement validation rule: suspicious_vendor
-- [ ] Implement validation rule: line_item_amount_mismatch
-- [ ] Write unit tests for each validation rule
-- [ ] Integration test with sample invoices
+- [x] Implement validation rule: unknown_item
+- [x] Implement validation rule: negative_quantity
+- [x] Implement validation rule: quantity_exceeds_stock
+- [x] Implement validation rule: out_of_stock
+- [ ] Implement validation rule: price_mismatch (deferred to future slice)
+- [ ] Implement validation rule: unknown_vendor (deferred to future slice)
+- [ ] Implement validation rule: suspicious_vendor (deferred to future slice)
+- [ ] Implement validation rule: line_item_amount_mismatch (deferred to future slice)
+- [x] Write unit tests for each validation rule
+- [ ] Integration test with sample invoices (requires ingestion - Slice 4)
 
 ## Slice 4: Ingestion for JSON/CSV/TXT
 
@@ -96,5 +96,5 @@
 
 ---
 
-**Current Status:** Slice 2 complete ✓ | Ready for Slice 3 (Validation Rules)
-**Last Updated:** 2026-02-05 09:56
+**Current Status:** Slice 3 complete ✓ | Ready for Slice 4 (Ingestion)
+**Last Updated:** 2026-02-05 10:58
