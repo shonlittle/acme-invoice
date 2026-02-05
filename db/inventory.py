@@ -60,12 +60,33 @@ def get_item_info(item: str, db_path: str = "db/inventory.db") -> Optional[dict]
     """
     Query inventory for an item.
 
-    Returns dict with keys: item, stock, unit_price, category, etc.
+    Returns dict with keys: item, stock, unit_price, category,
+    min_order_qty, max_order_qty, active
     Returns None if item not found.
-
-    TODO: [Slice 3] Implement actual query logic
     """
-    return None
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT item, stock, unit_price, category, min_order_qty, max_order_qty, active "
+        "FROM inventory WHERE item = ?",
+        (item,),
+    )
+    row = cursor.fetchone()
+    conn.close()
+
+    if row is None:
+        return None
+
+    return {
+        "item": row[0],
+        "stock": row[1],
+        "unit_price": row[2],
+        "category": row[3],
+        "min_order_qty": row[4],
+        "max_order_qty": row[5],
+        "active": row[6],
+    }
 
 
 def get_vendor_info(
@@ -90,7 +111,6 @@ def check_stock_availability(
 
     Returns (is_available, message)
 
-    TODO: [Slice 3] Implement actual stock check logic
     Examples:
     - Item not in DB: (False, "Item not found in inventory")
     - Negative qty: (False, "Invalid quantity: -5")
@@ -98,4 +118,22 @@ def check_stock_availability(
     - Stock == 0: (False, "Item out of stock")
     - Valid: (True, "OK")
     """
+    # Check for negative quantity
+    if quantity < 0:
+        return (False, f"Invalid quantity: {quantity}")
+
+    # Query inventory
+    item_info = get_item_info(item, db_path)
+
+    if item_info is None:
+        return (False, "Item not found in inventory")
+
+    stock = item_info["stock"]
+
+    if stock == 0:
+        return (False, "Item out of stock")
+
+    if quantity > stock:
+        return (False, f"Requested {quantity}, only {stock} in stock")
+
     return (True, "OK")

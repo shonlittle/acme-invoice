@@ -53,15 +53,25 @@ class ValidationFinding:
     """
     Represents a single validation issue found during the validation stage.
 
+    Fields:
+    - code: Stable identifier (UNKNOWN_ITEM, NEGATIVE_QTY, EXCEEDS_STOCK, OUT_OF_STOCK)
+    - severity: INFO | WARN | ERROR
+    - message: Human-readable description
+    - item_name: Item identifier (if applicable)
+    - requested_qty: Quantity requested (if applicable)
+    - available_qty: Stock available (if applicable)
+
     Examples:
-    - rule: "unknown_item", item: "SuperGizmo", message: "Item not found in inventory"
-    - rule: "quantity_exceeds_stock", item: "GadgetX", message: "Requested 20, only 5 in stock"
-    - rule: "price_mismatch", item: "WidgetA", message: "Invoice price $300, expected $250"
+    - code: "UNKNOWN_ITEM", severity: "ERROR", message: "Item 'SuperGizmo' not found"
+    - code: "EXCEEDS_STOCK", severity: "ERROR", message: "Requested 20, only 5 available"
     """
 
-    rule: str
-    item: str
+    code: str
+    severity: str
     message: str
+    item_name: Optional[str] = None
+    requested_qty: Optional[int] = None
+    available_qty: Optional[int] = None
 
 
 @dataclass
