@@ -91,19 +91,46 @@ class ValidationFinding:
 
 
 @dataclass
+class InitialDecision:
+    """Captures the initial approval decision before reflection."""
+
+    approved: bool
+    reasons: List[str]
+    timestamp: str  # ISO format
+
+
+@dataclass
+class ReflectionResult:
+    """Captures the reflection/critique step."""
+
+    critique_notes: str
+    revised: bool
+    llm_backend: str = "mock"  # "grok" or "mock"
+    revised_reasons: Optional[List[str]] = None
+
+
+@dataclass
 class ApprovalDecision:
     """
-    Represents the approval decision from the approval stage.
+    Production-shaped approval decision with full audit trail.
 
-    Supports reflection/critique loop:
-    - approved: Final decision (True/False)
-    - reasoning: Initial decision reasoning
-    - reflection: Optional critique/revision notes from reflection loop
+    Fields:
+    - approved: Final decision (bool)
+    - decision_policy: Policy version used (e.g., "v1_rule_based")
+    - reasons: Final list of reasons (actionable, short)
+    - severity_summary: Counts by severity from validation findings
+    - initial_decision: The first decision before reflection
+    - reflection: Critique/revision step (optional)
+    - final_decision_timestamp: When final decision was made
     """
 
     approved: bool
-    reasoning: str
-    reflection: Optional[str] = None  # Result of critique/revision loop
+    decision_policy: str
+    reasons: List[str]
+    severity_summary: Dict[str, int]
+    initial_decision: InitialDecision
+    reflection: Optional[ReflectionResult]
+    final_decision_timestamp: str
 
 
 @dataclass
