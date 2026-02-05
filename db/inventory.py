@@ -20,12 +20,40 @@ def init_database(db_path: str = "inventory.db") -> None:
     """
     Initialize the inventory database with schema and seed data.
 
-    TODO: [Slice 2] Implement actual database creation logic
-    - Create tables
-    - Insert seed data
-    - Handle existing data gracefully
+    Creates inventory.db if missing, creates tables (inventory, vendors) if they
+    don't exist, and seeds initial data only if tables are empty.
+
+    This function is idempotent - safe to call multiple times.
+
+    Args:
+        db_path: Path to SQLite database file (default: inventory.db)
     """
-    pass
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    try:
+        # Create tables if they don't exist
+        cursor.execute(INVENTORY_TABLE_SQL)
+        cursor.execute(VENDORS_TABLE_SQL)
+
+        # Seed inventory table if empty
+        cursor.execute("SELECT COUNT(*) FROM inventory")
+        if cursor.fetchone()[0] == 0:
+            cursor.executemany(
+                "INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?, ?)",
+                INVENTORY_SEED_DATA,
+            )
+
+        # Seed vendors table if empty
+        cursor.execute("SELECT COUNT(*) FROM vendors")
+        if cursor.fetchone()[0] == 0:
+            cursor.executemany(
+                "INSERT INTO vendors VALUES (?, ?, ?, ?)", VENDORS_SEED_DATA
+            )
+
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def get_item_info(item: str, db_path: str = "inventory.db") -> Optional[dict]:
