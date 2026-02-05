@@ -14,6 +14,7 @@ from agents.approve import approve_stage
 from agents.ingest import ingest_stage
 from agents.pay import pay_stage
 from agents.validate import validate_stage
+from db.inventory import init_database
 from models import PipelineContext, PipelineResult
 from utils.logging import log_error, log_stage_end, log_stage_start
 
@@ -28,6 +29,9 @@ def run_pipeline(invoice_path: str) -> PipelineResult:
     Returns:
         PipelineResult with data from all stages + any errors
     """
+    # Auto-initialize database on first run (idempotent)
+    init_database()
+
     # Initialize pipeline context
     ctx = PipelineContext(invoice_path=invoice_path)
 
