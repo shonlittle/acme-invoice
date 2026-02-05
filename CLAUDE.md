@@ -101,6 +101,28 @@ If implementing any “LLM-like” calls:
 - default implementation is **deterministic mock** (rule-based, seeded, or pure function)
 - never block the pipeline on an unavailable model
 
+## Optional xAI / Grok Integration
+
+This project supports **optional integration with xAI (Grok)**, aligned with Galatiq.ai’s Grok-first ecosystem.
+
+- If `XAI_API_KEY` is present in `.env`, the approval stage _may_ use Grok for:
+  - decision reasoning
+  - reflection / critique of initial approval decisions
+- If `XAI_API_KEY` is **not** present, the system **must fall back** to a deterministic, local mock LLM so the pipeline still runs end-to-end.
+
+Design requirements:
+
+- Grok usage must be **encapsulated behind an interface** (e.g., `LLMClient`).
+- Business logic must **not depend** on Grok being available.
+- The default behavior should be deterministic and testable.
+- Logs should clearly indicate whether Grok or the mock backend was used.
+
+This ensures:
+
+- local reproducibility
+- reviewer friendliness
+- alignment with xAI-first environments without hard dependency
+
 ## Guardrails for Cline
 
 Cline must:
