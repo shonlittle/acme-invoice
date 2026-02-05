@@ -88,6 +88,23 @@ def main():
         f"Parse errors: {sum(1 for r in results if r['vendor'] in ['ERROR', 'PARSE_ERROR'])}"
     )
     print(f"Validation errors: {sum(r['errors'] for r in results)}")
+
+    # Approval metrics
+    approved_count = sum(1 for r in results if r["approved"] is True)
+    rejected_count = sum(1 for r in results if r["approved"] is False)
+    pending_count = sum(1 for r in results if r["approved"] is None)
+
+    if len(results) > 0:
+        print(
+            f"Approval rate: {approved_count}/{len(results)} ({approved_count/len(results)*100:.1f}%)"
+        )
+        print(
+            f"Rejection rate: {rejected_count}/{len(results)} ({rejected_count/len(results)*100:.1f}%)"
+        )
+        print(
+            f"Pending rate: {pending_count}/{len(results)} ({pending_count/len(results)*100:.1f}%)"
+        )
+
     print(f"{'='*90}\n")
 
 
