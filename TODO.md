@@ -45,15 +45,17 @@
 - [x] Write smoke script to test all sample inputs (scripts/run_samples.py)
 - [x] Handle edge cases (empty vendor, null due_date, etc.)
 
-## Slice 5: Approval Stage with Reflection/Critique Loop
+## Slice 5: Approval Stage with Reflection/Critique Loop ✓
 
-- [ ] Implement rule-based approval logic (threshold: $10K)
-- [ ] Integrate Grok for decision reasoning
-- [ ] Implement initial approval decision
-- [ ] Implement reflection/critique loop
-- [ ] Implement decision revision mechanism
-- [ ] Write tests for revision behavior
-- [ ] Add fallback to deterministic mock if Grok unavailable
+- [x] Implement rule-based approval logic (threshold: $10K)
+- [x] Integrate Grok for decision reasoning
+- [x] Implement initial approval decision
+- [x] Implement reflection/critique loop
+- [x] Implement decision revision mechanism
+- [x] Write tests for revision behavior
+- [x] Add fallback to deterministic mock if Grok unavailable
+- [x] Implement .env auto-loader (stdlib only)
+- [x] Add approval metrics to run_samples.py
 
 ## Slice 6: Payment Stage
 
@@ -96,5 +98,5 @@
 
 ---
 
-**Current Status:** Slice 4 complete ✓ | Ready for Slice 5 (Approval + Reflection)
-**Last Updated:** 2026-02-05 12:57
+**Current Status:** Slice 5 complete ✓ | Ready for Slice 6 (Payment)
+**Last Updated:** 2026-02-05 13:13
