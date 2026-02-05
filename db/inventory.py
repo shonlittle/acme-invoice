@@ -16,7 +16,7 @@ from db.schema import (
 )
 
 
-def init_database(db_path: str = "inventory.db") -> None:
+def init_database(db_path: str = "db/inventory.db") -> None:
     """
     Initialize the inventory database with schema and seed data.
 
@@ -56,7 +56,7 @@ def init_database(db_path: str = "inventory.db") -> None:
         conn.close()
 
 
-def get_item_info(item: str, db_path: str = "inventory.db") -> Optional[dict]:
+def get_item_info(item: str, db_path: str = "db/inventory.db") -> Optional[dict]:
     """
     Query inventory for an item.
 
@@ -68,7 +68,9 @@ def get_item_info(item: str, db_path: str = "inventory.db") -> Optional[dict]:
     return None
 
 
-def get_vendor_info(vendor_name: str, db_path: str = "inventory.db") -> Optional[dict]:
+def get_vendor_info(
+    vendor_name: str, db_path: str = "db/inventory.db"
+) -> Optional[dict]:
     """
     Query vendors table for vendor information.
 
@@ -81,7 +83,7 @@ def get_vendor_info(vendor_name: str, db_path: str = "inventory.db") -> Optional
 
 
 def check_stock_availability(
-    item: str, quantity: int, db_path: str = "inventory.db"
+    item: str, quantity: int, db_path: str = "db/inventory.db"
 ) -> Tuple[bool, str]:
     """
     Check if requested quantity is available in stock.

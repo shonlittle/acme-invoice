@@ -208,3 +208,7 @@ __marimo__/
 
 # Qodo folder
 .qodo/
+
+# Database files
+db/*.db
+inventory.db

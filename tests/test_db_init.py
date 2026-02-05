@@ -20,7 +20,7 @@ from db.inventory import init_database
 
 def test_db_init():
     """Test database initialization with a clean test database."""
-    test_db_path = "test_inventory.db"
+    test_db_path = "db/test_inventory.db"
 
     # Clean slate
     if os.path.exists(test_db_path):
