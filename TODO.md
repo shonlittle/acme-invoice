@@ -36,14 +36,14 @@
 - [x] Write unit tests for each validation rule
 - [ ] Integration test with sample invoices (requires ingestion - Slice 4)
 
-## Slice 4: Ingestion for JSON/CSV/TXT
+## Slice 4: Ingestion for JSON/CSV/TXT ✓
 
-- [ ] Implement JSON parser (invoice_1004.json, etc.)
-- [ ] Implement CSV parser (invoice_1006.csv, etc.)
-- [ ] Implement TXT parser with heuristics (invoice_1001.txt, etc.)
-- [ ] Handle missing/malformed data gracefully
-- [ ] Write smoke script to test all sample inputs
-- [ ] Handle edge cases (empty vendor, null due_date, etc.)
+- [x] Implement JSON parser (invoice_1004.json, etc.)
+- [x] Implement CSV parser (invoice_1006.csv, etc.)
+- [x] Implement TXT parser with heuristics (invoice_1001.txt, etc.)
+- [x] Handle missing/malformed data gracefully
+- [x] Write smoke script to test all sample inputs (scripts/run_samples.py)
+- [x] Handle edge cases (empty vendor, null due_date, etc.)
 
 ## Slice 5: Approval Stage with Reflection/Critique Loop
 
@@ -96,5 +96,5 @@
 
 ---
 
-**Current Status:** Slice 3 complete ✓ | Ready for Slice 4 (Ingestion)
-**Last Updated:** 2026-02-05 10:58
+**Current Status:** Slice 4 complete ✓ | Ready for Slice 5 (Approval + Reflection)
+**Last Updated:** 2026-02-05 12:57
