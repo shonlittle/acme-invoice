@@ -3,15 +3,15 @@
 ## Slice 1: Scaffolding + Models + Pipeline Skeleton ✓
 
 - [x] Create TODO.md master checklist
-- [ ] Implement enhanced data models (models.py)
-- [ ] Implement database schema (db/schema.py, db/inventory.py)
-- [ ] Implement pipeline runner skeleton (pipeline/runner.py)
-- [ ] Implement stub stage functions (agents/\*.py)
-- [ ] Implement LLM client interface (llm/client.py)
-- [ ] Implement structured logging (utils/logging.py)
-- [ ] Implement CLI entrypoint (main.py)
-- [ ] Create output directory structure
-- [ ] Test end-to-end with sample invoice
+- [x] Implement enhanced data models (models.py)
+- [x] Implement database schema (db/schema.py, db/inventory.py)
+- [x] Implement pipeline runner skeleton (pipeline/runner.py)
+- [x] Implement stub stage functions (agents/\*.py)
+- [x] Implement LLM client interface (llm/client.py)
+- [x] Implement structured logging (utils/logging.py)
+- [x] Implement CLI entrypoint (main.py)
+- [x] Create output directory structure
+- [x] Test end-to-end with sample invoice
 
 ## Slice 2: SQLite DB Init + Seeding
 
@@ -96,5 +96,5 @@
 
 ---
 
-**Current Status:** Slice 1 in progress
-**Last Updated:** 2026-02-05
+**Current Status:** Slice 1 complete ✓ | Ready for Slice 2 (DB Init + Seeding)
+**Last Updated:** 2026-02-05 08:18
