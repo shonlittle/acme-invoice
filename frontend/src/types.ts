@@ -81,3 +81,19 @@ export interface SamplesResponse {
 }
 
 export type Status = "idle" | "loading" | "success" | "error";
+
+export interface BatchSummary {
+  total: number;
+  approved: number;
+  rejected: number;
+  revised: number;
+  approval_rate: number;
+  revision_rate: number;
+  findings_by_severity: Record<string, number>;
+  findings_by_code: Record<string, number>;
+}
+
+export interface BatchResult {
+  results: PipelineResult[];
+  summary: BatchSummary;
+}

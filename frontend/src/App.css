@@ -281,10 +281,193 @@ body {
   overflow-y: auto;
 }
 
+/* ===== Metrics Panel ===== */
+.metrics-panel {
+  margin-top: 1.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.metrics-panel h3 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #1a1a2e;
+}
+
+.metrics-section {
+  margin-bottom: 1.5rem;
+}
+
+.metrics-section:last-child {
+  margin-bottom: 0;
+}
+
+.metrics-section h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metrics-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.metrics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.metrics-table th,
+.metrics-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.metrics-table th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #475569;
+}
+
+.metrics-table tr:last-child td {
+  border-bottom: none;
+}
+
+.metrics-stat {
+  font-size: 0.875rem;
+  color: #1e293b;
+  margin: 0;
+}
+
+.no-data {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  font-style: italic;
+  margin: 0;
+}
+
+/* ===== Batch Metrics ===== */
+.batch-metrics {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  overflow-y: auto;
+}
+
+.batch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.batch-header h2 {
+  font-size: 1.1rem;
+  margin: 0;
+  color: #1a1a2e;
+}
+
+.close-btn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #475569;
+  transition: background 0.15s;
+}
+
+.close-btn:hover {
+  background: #e2e8f0;
+}
+
+.batch-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.batch-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  text-align: center;
+}
+
+.batch-card-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.batch-card-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.batch-section {
+  margin-bottom: 1.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.batch-section:last-child {
+  margin-bottom: 0;
+}
+
+.batch-section h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 0.75rem;
+}
+
+.batch-note {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.run-all-btn {
+  margin-top: 0.5rem;
+  background: #16a34a;
+}
+
+.run-all-btn:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.run-all-btn:disabled {
+  background: #94a3b8;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
   .app-main {
     grid-template-columns: 1fr;
     padding: 1rem;
+  }
+
+  .batch-summary-cards {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
 }

@@ -1,4 +1,5 @@
 import type { PipelineResult } from "../types";
+import MetricsPanel from "./MetricsPanel";
 import RawJsonView from "./RawJsonView";
 import SummaryCards from "./SummaryCards";
 
@@ -32,6 +33,7 @@ export default function ResultPanel({ result, errorMsg }: Props) {
     <div className="result-panel">
       <h2>📊 Results — {result.invoice?.invoice_number ?? "Unknown"}</h2>
       <SummaryCards result={result} />
+      <MetricsPanel result={result} />
       <RawJsonView result={result} />
     </div>
   );

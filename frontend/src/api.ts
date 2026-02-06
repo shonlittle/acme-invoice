@@ -1,6 +1,6 @@
 /** API client — fetch-based, no external dependencies. */
 
-import type { PipelineResult, SamplesResponse } from "./types";
+import type { BatchResult, PipelineResult, SamplesResponse } from "./types";
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -41,6 +41,17 @@ export async function processUpload(file: File): Promise<PipelineResult> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail || `Upload failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function runAll(): Promise<BatchResult> {
+  const res = await fetch(`${BASE}/api/run-all`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Run all failed: ${res.status}`);
   }
   return res.json();
 }

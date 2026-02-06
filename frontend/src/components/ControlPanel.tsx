@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { fetchSamples, processSample, processUpload } from "../api";
-import type { PipelineResult, SampleFile, Status } from "../types";
+import { fetchSamples, processSample, processUpload, runAll } from "../api";
+import type { BatchResult, PipelineResult, SampleFile, Status } from "../types";
 
 interface Props {
   onResult: (result: PipelineResult) => void;
+  onBatchResult: (result: BatchResult) => void;
   onError: (msg: string) => void;
   onStatusChange: (status: Status) => void;
   status: Status;
@@ -11,6 +12,7 @@ interface Props {
 
 export default function ControlPanel({
   onResult,
+  onBatchResult,
   onError,
   onStatusChange,
   status,
@@ -43,6 +45,19 @@ export default function ControlPanel({
         return;
       }
       onResult(result);
+      onStatusChange("success");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      onError(msg);
+      onStatusChange("error");
+    }
+  }
+
+  async function handleRunAll() {
+    onStatusChange("loading");
+    try {
+      const result = await runAll();
+      onBatchResult(result);
       onStatusChange("success");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -96,6 +111,14 @@ export default function ControlPanel({
         disabled={isLoading || (!file && !selectedSample)}
       >
         {isLoading ? "⏳ Processing…" : "▶ Run Pipeline"}
+      </button>
+
+      <button
+        className="run-btn run-all-btn"
+        onClick={handleRunAll}
+        disabled={isLoading}
+      >
+        {isLoading ? "⏳ Processing…" : "▶ Run All Samples"}
       </button>
 
       <div className={`status status-${status}`}>
