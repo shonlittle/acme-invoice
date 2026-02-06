@@ -1,0 +1,18 @@
+services:
+  backend:
+    build: .
+    ports:
+      - "8080:8000"
+    volumes:
+      - ./data:/app/data:ro
+      - ./out:/app/out:rw
+    environment:
+      - XAI_API_KEY=${XAI_API_KEY:-}
+
+  # Uncomment when frontend/ is implemented:
+  # frontend:
+  #   build: ./frontend
+  #   ports:
+  #     - "5173:5173"
+  #   depends_on:
+  #     - backend
