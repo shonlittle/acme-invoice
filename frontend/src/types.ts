@@ -85,6 +85,8 @@ export type Status = "idle" | "loading" | "success" | "error";
 
 export interface BatchSummary {
   total: number;
+  files_processed: number;
+  duplicates_found: number;
   approved: number;
   rejected: number;
   revised: number;
@@ -94,7 +96,15 @@ export interface BatchSummary {
   findings_by_code: Record<string, number>;
 }
 
+export interface DuplicateGroup {
+  invoice_number: string;
+  files: string[];
+  kept: string;
+  reason: string;
+}
+
 export interface BatchResult {
   results: PipelineResult[];
   summary: BatchSummary;
+  duplicate_groups: DuplicateGroup[];
 }

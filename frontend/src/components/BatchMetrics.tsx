@@ -19,8 +19,18 @@ export default function BatchMetrics({ batchResult, onClose }: Props) {
 
       <div className="batch-summary-cards">
         <div className="batch-card">
-          <div className="batch-card-label">Total Invoices</div>
+          <div className="batch-card-label">Unique Invoices</div>
           <div className="batch-card-value">{summary.total}</div>
+        </div>
+
+        <div className="batch-card">
+          <div className="batch-card-label">Files Processed</div>
+          <div className="batch-card-value">{summary.files_processed}</div>
+        </div>
+
+        <div className="batch-card">
+          <div className="batch-card-label">Duplicates</div>
+          <div className="batch-card-value">{summary.duplicates_found}</div>
         </div>
 
         <div className="batch-card">
@@ -91,6 +101,42 @@ export default function BatchMetrics({ batchResult, onClose }: Props) {
           <p className="no-data">No findings across all invoices</p>
         )}
       </div>
+
+      {batchResult.duplicate_groups.length > 0 && (
+        <div className="batch-section">
+          <h3>🔄 Duplicate Invoices Detected</h3>
+          <table className="metrics-table">
+            <thead>
+              <tr>
+                <th>Invoice Number</th>
+                <th>Files Found</th>
+                <th>Kept</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              {batchResult.duplicate_groups.map((dup) => (
+                <tr key={dup.invoice_number}>
+                  <td>{dup.invoice_number}</td>
+                  <td>
+                    {dup.files.map((file, idx) => (
+                      <div key={idx}>
+                        {file === dup.kept ? (
+                          <span className="text-ok">✓ {file}</span>
+                        ) : (
+                          <span className="text-neutral">{file}</span>
+                        )}
+                      </div>
+                    ))}
+                  </td>
+                  <td>{dup.kept}</td>
+                  <td className="text-neutral">{dup.reason}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="batch-section">
         <h3>Individual Results ({batchResult.results.length})</h3>

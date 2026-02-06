@@ -138,17 +138,83 @@ def run_all_samples():
 
     Returns a batch result with individual PipelineResults and aggregate summary.
     No persistence — lightweight, in-memory summary.
+
+    Deduplicates invoices by invoice_number, preferring higher-quality formats
+    (JSON > CSV > TXT > PDF > XML).
     """
     if not SAMPLES_DIR.exists():
         raise HTTPException(status_code=404, detail="Samples directory not found")
 
-    results = []
+    # Process all files
+    all_results = []
     for invoice_file in sorted(SAMPLES_DIR.iterdir()):
         if invoice_file.is_file() and not invoice_file.name.startswith("."):
             result = run_pipeline(str(invoice_file))
-            results.append(asdict(result))
+            result_dict = asdict(result)
+            result_dict["_filename"] = (
+                invoice_file.name
+            )  # Track filename for deduplication
+            all_results.append(result_dict)
 
-    # Compute aggregate summary
+    files_processed = len(all_results)
+
+    # Format quality scoring (higher is better)
+    def get_format_score(filename: str) -> int:
+        ext = Path(filename).suffix.lower()
+        scores = {".json": 5, ".csv": 4, ".txt": 3, ".pdf": 2, ".xml": 1}
+        return scores.get(ext, 0)
+
+    # Group by invoice_number (with filename fallback for failed parsing)
+    invoice_groups = {}
+    for result in all_results:
+        invoice = result.get("invoice")
+        if invoice and invoice.get("invoice_number"):
+            # Primary: group by invoice_number
+            inv_num = invoice["invoice_number"]
+            if inv_num not in invoice_groups:
+                invoice_groups[inv_num] = []
+            invoice_groups[inv_num].append(result)
+        else:
+            # Fallback: group by filename pattern (e.g., invoice_1013.json + invoice_1013.pdf)
+            filename = result["_filename"]
+            # Extract base name without extension (e.g., "invoice_1013" from "invoice_1013.json")
+            base_name = Path(filename).stem
+            group_key = f"_nonum_{base_name}"
+            if group_key not in invoice_groups:
+                invoice_groups[group_key] = []
+            invoice_groups[group_key].append(result)
+
+    # Deduplicate: keep best format for each invoice
+    results = []
+    duplicate_groups = []
+
+    for inv_num, group in invoice_groups.items():
+        if len(group) > 1:
+            # Found duplicates — keep best format
+            group_sorted = sorted(
+                group, key=lambda r: get_format_score(r["_filename"]), reverse=True
+            )
+            best = group_sorted[0]
+            results.append(best)
+
+            # Track duplicate info
+            duplicate_groups.append(
+                {
+                    "invoice_number": inv_num,
+                    "files": [r["_filename"] for r in group],
+                    "kept": best["_filename"],
+                    "reason": f"Preferred format: {Path(best['_filename']).suffix.upper()}",
+                }
+            )
+        else:
+            # No duplicates
+            results.append(group[0])
+
+    # Remove _filename from results (internal tracking only)
+    for r in results:
+        r.pop("_filename", None)
+
+    # Compute aggregate summary on deduplicated results
     total = len(results)
     approved = sum(1 for r in results if r.get("approval_decision", {}).get("approved"))
     rejected = total - approved
@@ -168,6 +234,8 @@ def run_all_samples():
 
     summary = {
         "total": total,
+        "files_processed": files_processed,
+        "duplicates_found": len(duplicate_groups),
         "approved": approved,
         "rejected": rejected,
         "revised": revised,
@@ -177,4 +245,8 @@ def run_all_samples():
         "findings_by_code": findings_by_code,
     }
 
-    return {"results": results, "summary": summary}
+    return {
+        "results": results,
+        "summary": summary,
+        "duplicate_groups": duplicate_groups,
+    }
