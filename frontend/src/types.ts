@@ -19,6 +19,7 @@ export interface Invoice {
   tax_amount: number | null;
   currency: string;
   payment_terms: string | null;
+  revision: string | null;
 }
 
 export interface ValidationFinding {

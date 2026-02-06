@@ -12,7 +12,7 @@ export default function SummaryCards({ result }: Props) {
 
   const errorCount = findings.filter((f) => f.severity === "ERROR").length;
   const warnCount = findings.filter((f) => f.severity === "WARN").length;
-  const revised = approval?.reflection?.revised ?? false;
+  const revisionLabel = inv?.revision ? `🔄 Yes (${inv.revision})` : "No";
 
   return (
     <div className="summary-cards">
@@ -61,7 +61,7 @@ export default function SummaryCards({ result }: Props) {
 
       <div className="card">
         <div className="card-label">Revised?</div>
-        <div className="card-value">{revised ? "🔄 Yes" : "No"}</div>
+        <div className="card-value">{revisionLabel}</div>
       </div>
 
       <div className="card">
