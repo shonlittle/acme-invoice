@@ -1,3 +1,106 @@
+# Invoice Processing Prototype
+
+## Quick Start
+
+### 1. Setup Virtual Environment
+
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On macOS/Linux
+# OR
+venv\Scripts\activate  # On Windows
+```
+
+### 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Initialize Database
+
+```bash
+python3 db/inventory.py
+```
+
+### 4. Run Pipeline
+
+```bash
+# Single invoice
+python3 main.py --invoice_path=data/invoices/invoice_1004.json
+
+# All samples
+python3 scripts/run_samples.py
+
+# Tests
+python3 -m pytest tests/ -v
+```
+
+---
+
+## Implemented Features
+
+### 4-Stage Pipeline
+
+- ✅ **Ingestion** - JSON, CSV, TXT, PDF support
+- ✅ **Validation** - SQLite inventory checking (4 rules)
+- ✅ **Approval** - Rule-based policy + reflection/critique loop
+- ✅ **Payment** - Mock payment with strict gating
+
+### Key Capabilities
+
+- **Structured Logging** - Observable at every stage
+- **Deterministic Testing** - 24 unit tests (all passing)
+- **Graceful Degradation** - Never crashes, returns minimal data on error
+- **Optional LLM Integration** - Grok via xAI API (falls back to mock)
+- **Audit Trail** - Full provenance tracking and confidence scores
+
+---
+
+## PDF Ingestion Limitations
+
+PDF invoice processing uses best-effort text extraction:
+
+- **Layout/Formatting Loss:** PDF text extraction does not preserve visual layout, tables, or complex formatting
+- **Digital Text Only:** OCR (image-to-text) is out of scope - PDFs must contain extractable text
+- **Lower Confidence:** All PDF-extracted fields are marked with reduced confidence scores
+- **Library Required:** Requires `PyPDF2` (installed via `requirements.txt`)
+
+If PDF extraction fails or yields empty text, the pipeline continues with a minimal invoice and clear warnings.
+
+---
+
+## Architecture
+
+```
+main.py (CLI)
+└── pipeline/runner.py (orchestrator)
+    ├── agents/ingest.py    (JSON/CSV/TXT/PDF → Invoice)
+    ├── agents/validate.py  (Invoice → ValidationFindings)
+    ├── agents/approve.py   (Findings → ApprovalDecision)
+    └── agents/pay.py       (Decision → PaymentResult)
+```
+
+---
+
+## Testing
+
+```bash
+# All tests
+python3 -m pytest tests/ -v
+
+# Specific test files
+python3 -m pytest tests/test_ingestion.py -v
+python3 -m pytest tests/test_validation.py -v
+python3 -m pytest tests/test_approval.py -v
+python3 -m pytest tests/test_payment.py -v
+```
+
+---
+
+<!-- DO NOT CHANGE: Original README content below this line -->
+<!-- This section is the original project specification and should be preserved as-is -->
+
 # Galatiq Case: Invoice Processing Automation
 
 ## Background
@@ -5,6 +108,7 @@
 Acme Corp is a PE-backed manufacturing firm losing **$2M/year** on manual invoice processing. Invoices arrive via email as PDFs in messy formats with frequent errors. Staff manually extract data, validate against a legacy inventory database (inconsistent), obtain VP approval (via email chains), and process payment (via a banking API).
 
 **Current pain points:**
+
 - 30% error rate
 - 5-day processing delays
 - Frustrated stakeholders
@@ -64,13 +168,13 @@ conn.commit()
 
 **Why this matters:** The sample invoices are designed to test your validation logic against this database. For example:
 
-| Scenario | Invoice | What should happen |
-|---|---|---|
-| Normal order within stock | INV-1001, INV-1004, INV-1006 | Items found, quantities valid — passes validation |
-| Quantity exceeds stock | INV-1002 (requests 20× GadgetX, only 5 in stock) | Flagged as stock mismatch |
-| Fraudulent / zero-stock item | INV-1003 (references FakeItem, 0 stock) | Flagged as out of stock or suspicious |
-| Item not in database at all | INV-1008 (SuperGizmo, MegaSprocket), INV-1016 (WidgetC) | Flagged as unknown item |
-| Invalid data | INV-1009 (negative quantity) | Flagged as data integrity issue |
+| Scenario                     | Invoice                                                 | What should happen                                |
+| ---------------------------- | ------------------------------------------------------- | ------------------------------------------------- |
+| Normal order within stock    | INV-1001, INV-1004, INV-1006                            | Items found, quantities valid — passes validation |
+| Quantity exceeds stock       | INV-1002 (requests 20× GadgetX, only 5 in stock)        | Flagged as stock mismatch                         |
+| Fraudulent / zero-stock item | INV-1003 (references FakeItem, 0 stock)                 | Flagged as out of stock or suspicious             |
+| Item not in database at all  | INV-1008 (SuperGizmo, MegaSprocket), INV-1016 (WidgetC) | Flagged as unknown item                           |
+| Invalid data                 | INV-1009 (negative quantity)                            | Flagged as data integrity issue                   |
 
 You may extend the seed data with additional items or columns (e.g., unit price, category) to support richer validation — the above is the minimum needed to exercise the provided test invoices. If you want your system to also validate pricing or vendor information, consider adding tables for those as well.
 
