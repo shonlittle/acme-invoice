@@ -11,13 +11,23 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import pytest
+import pytest  # noqa: E402
 
-from agents.pay import mock_payment, pay_stage
-from models import ApprovalDecision, InitialDecision, Invoice, LineItem, PipelineContext
+from agents.pay import mock_payment, pay_stage  # noqa: E402
+from models import (  # noqa: E402
+    ApprovalDecision,
+    InitialDecision,
+    Invoice,
+    LineItem,
+    PipelineContext,
+)
 
 
-def make_test_invoice(vendor="Test Vendor", amount=1000.0, invoice_number="INV-TEST"):
+def make_test_invoice(
+    vendor="Test Vendor",
+    amount=1000.0,
+    invoice_number="INV-TEST",
+):
     """Helper to create test Invoice objects."""
     return Invoice(
         vendor=vendor,
@@ -43,7 +53,7 @@ def make_approval(approved=True, reasons=None):
             timestamp="2026-01-01T00:00:00",
         ),
         reflection=None,
-        final_decision_timestamp="2026-01-01T00:00:00",
+        final_decision_timestamp=("2026-01-01T00:00:00"),
     )
 
 

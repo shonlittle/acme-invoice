@@ -12,18 +12,17 @@ Uses in-memory SQLite DB with known test data for determinism.
 """
 
 import os
-import sqlite3
 import sys
 import tempfile
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import pytest
+import pytest  # noqa: E402
 
-from agents.validate import validate_stage
-from db.inventory import init_database
-from models import Invoice, LineItem, PipelineContext, ValidationFinding
+from agents.validate import validate_stage  # noqa: E402
+from db.inventory import init_database  # noqa: E402
+from models import Invoice, LineItem, PipelineContext  # noqa: E402
 
 
 def make_test_invoice(
@@ -76,7 +75,8 @@ def test_db():
 
 def test_unknown_item(test_db):
     """UNKNOWN_ITEM: Item not in inventory should trigger ERROR."""
-    invoice = make_test_invoice(line_items=[("SuperGizmo", 5)])  # Not in inventory
+    # Not in inventory
+    invoice = make_test_invoice(line_items=[("SuperGizmo", 5)])
 
     ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
     ctx = validate_stage(ctx)
@@ -94,7 +94,8 @@ def test_unknown_item(test_db):
 
 def test_negative_quantity(test_db):
     """NEGATIVE_QTY: Quantity < 0 should trigger ERROR."""
-    invoice = make_test_invoice(line_items=[("WidgetA", -5)])  # Negative quantity
+    # Negative quantity
+    invoice = make_test_invoice(line_items=[("WidgetA", -5)])
 
     ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
     ctx = validate_stage(ctx)
@@ -112,7 +113,8 @@ def test_negative_quantity(test_db):
 
 def test_exceeds_stock(test_db):
     """EXCEEDS_STOCK: Requested > available should trigger ERROR."""
-    invoice = make_test_invoice(line_items=[("GadgetX", 20)])  # Only 5 in stock
+    # Only 5 in stock
+    invoice = make_test_invoice(line_items=[("GadgetX", 20)])
 
     ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
     ctx = validate_stage(ctx)
@@ -148,7 +150,8 @@ def test_out_of_stock(test_db):
 
 def test_quantity_equals_stock_ok(test_db):
     """Edge case: quantity == stock should pass with no findings."""
-    invoice = make_test_invoice(line_items=[("GadgetX", 5)])  # Exactly 5 in stock
+    # Exactly 5 in stock
+    invoice = make_test_invoice(line_items=[("GadgetX", 5)])
 
     ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
     ctx = validate_stage(ctx)

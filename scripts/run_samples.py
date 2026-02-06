@@ -72,26 +72,31 @@ def main():
     print(f"\n{'='*90}")
     print("SUMMARY")
     print(f"{'='*90}\n")
-    print(
-        f"{'File':<30} {'Vendor':<25} {'Total':>10} {'Items':>6} {'Errors':>7} {'Approved':>9} {'Paid':>5}"
+    hdr = (
+        f"{'File':<30} {'Vendor':<25} {'Total':>10} "
+        f"{'Items':>6} {'Errors':>7} "
+        f"{'Approved':>9} {'Paid':>5}"
     )
+    print(hdr)
     print("-" * 90)
 
     for r in results:
         approved_str = str(r["approved"]) if r["approved"] is not None else "N/A"
         paid_str = "Yes" if r["paid"] else "No"
-        print(
-            f"{r['file']:<30} {r['vendor']:<25} ${r['total']:>9.2f} {r['items']:>6} {r['errors']:>7} {approved_str:>9} {paid_str:>5}"
+        row = (
+            f"{r['file']:<30} {r['vendor']:<25} "
+            f"${r['total']:>9.2f} {r['items']:>6} "
+            f"{r['errors']:>7} {approved_str:>9} "
+            f"{paid_str:>5}"
         )
+        print(row)
 
     print(f"\n{'='*90}")
     print(f"Total files processed: {len(results)}")
-    print(
-        f"Successful parses: {sum(1 for r in results if r['vendor'] != 'ERROR' and r['vendor'] != 'PARSE_ERROR')}"
-    )
-    print(
-        f"Parse errors: {sum(1 for r in results if r['vendor'] in ['ERROR', 'PARSE_ERROR'])}"
-    )
+    ok = sum(1 for r in results if r["vendor"] not in ("ERROR", "PARSE_ERROR"))
+    errs = sum(1 for r in results if r["vendor"] in ("ERROR", "PARSE_ERROR"))
+    print(f"Successful parses: {ok}")
+    print(f"Parse errors: {errs}")
     print(f"Validation errors: {sum(r['errors'] for r in results)}")
 
     # Approval metrics
@@ -103,18 +108,19 @@ def main():
     paid_count = sum(1 for r in results if r["paid"] is True)
 
     if len(results) > 0:
-        print(
-            f"Approval rate: {approved_count}/{len(results)} ({approved_count/len(results)*100:.1f}%)"
-        )
-        print(
-            f"Rejection rate: {rejected_count}/{len(results)} ({rejected_count/len(results)*100:.1f}%)"
-        )
-        print(
-            f"Pending rate: {pending_count}/{len(results)} ({pending_count/len(results)*100:.1f}%)"
-        )
+        n = len(results)
+        apct = approved_count / n * 100
+        rpct = rejected_count / n * 100
+        ppct = pending_count / n * 100
+        print(f"Approval rate: {approved_count}/{n} " f"({apct:.1f}%)")
+        print(f"Rejection rate: {rejected_count}/{n} " f"({rpct:.1f}%)")
+        print(f"Pending rate: {pending_count}/{n} " f"({ppct:.1f}%)")
         if approved_count > 0:
+            pay_pct = paid_count / approved_count * 100
             print(
-                f"Payment rate: {paid_count}/{approved_count} approved invoices paid ({paid_count/approved_count*100:.1f}%)"
+                f"Payment rate: {paid_count}/"
+                f"{approved_count} approved invoices "
+                f"paid ({pay_pct:.1f}%)"
             )
         else:
             print(f"Payment rate: {paid_count}/0 approved invoices paid (0.0%)")

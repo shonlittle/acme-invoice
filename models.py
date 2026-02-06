@@ -79,7 +79,8 @@ class ValidationFinding:
 
     Examples:
     - code: "UNKNOWN_ITEM", severity: "ERROR", message: "Item 'SuperGizmo' not found"
-    - code: "EXCEEDS_STOCK", severity: "ERROR", message: "Requested 20, only 5 available"
+    - code: "EXCEEDS_STOCK", severity: "ERROR",
+      message: "Requested 20, only 5 available"
     """
 
     code: str

@@ -12,6 +12,7 @@ Outputs:
 """
 
 import argparse
+import glob
 import json
 import sys
 from dataclasses import asdict
@@ -69,9 +70,6 @@ def main():
 
     # Handle --run_all mode
     if args.run_all:
-        import glob
-        from pathlib import Path
-
         invoice_files = (
             glob.glob("data/invoices/*.json")
             + glob.glob("data/invoices/*.csv")
@@ -102,8 +100,12 @@ def main():
                 results.append(
                     {
                         "file": Path(invoice_path).name,
-                        "vendor": result.invoice.vendor if result.invoice else "N/A",
-                        "amount": result.invoice.amount if result.invoice else 0.0,
+                        "vendor": (  # noqa: E501
+                            result.invoice.vendor if result.invoice else "N/A"
+                        ),
+                        "amount": (  # noqa: E501
+                            result.invoice.amount if result.invoice else 0.0
+                        ),
                         "approved": (
                             result.approval_decision.approved
                             if result.approval_decision
@@ -134,15 +136,24 @@ def main():
         print(f"\n{'='*90}")
         print("SUMMARY")
         print(f"{'='*90}\n")
-        print(f"{'File':<30} {'Vendor':<25} {'Amount':>10} {'Approved':>9} {'Paid':>5}")
+        hdr = (
+            f"{'File':<30} {'Vendor':<25} "
+            f"{'Amount':>10} {'Approved':>9} {'Paid':>5}"
+        )
+        print(hdr)
         print("-" * 90)
 
         for r in results:
-            approved_str = str(r["approved"]) if r["approved"] is not None else "N/A"
-            paid_str = "Yes" if r["paid"] else "No"
-            print(
-                f"{r['file']:<30} {r['vendor']:<25} ${r['amount']:>9.2f} {approved_str:>9} {paid_str:>5}"
+            approved_str = (  # noqa: E501
+                str(r["approved"]) if r["approved"] is not None else "N/A"
             )
+            paid_str = "Yes" if r["paid"] else "No"
+            row = (
+                f"{r['file']:<30} {r['vendor']:<25} "
+                f"${r['amount']:>9.2f} "
+                f"{approved_str:>9} {paid_str:>5}"
+            )
+            print(row)
 
         print(f"\n{'='*90}")
         print(f"Total files processed: {len(results)}")
