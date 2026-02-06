@@ -110,23 +110,23 @@ _This section is optional / above-and-beyond. It does not affect CLI functionali
 - [x] Add backend deps to requirements.txt (fastapi, uvicorn, python-multipart, httpx)
 - [x] Write backend smoke test (6 tests, all passing)
 
-### Frontend (React + TypeScript)
+### Frontend (React + TypeScript) ✓
 
-- [ ] Scaffold React app with TypeScript (Create React App or Vite)
-- [ ] Create API client module (api.ts)
-- [ ] Create InvoiceUpload component (file upload + sample selector dropdown)
-- [ ] Create PipelineResult component (full result display)
-- [ ] Create ValidationFindings component (findings table with severity badges)
-- [ ] Create ApprovalDecision component (approved/rejected with reasons)
-- [ ] Create PaymentResult component (status + reference ID)
-- [ ] Add basic styling (clean, readable layout)
-- [ ] Add proxy config for local dev (port 8000)
+- [x] Scaffold React app with TypeScript (Vite)
+- [x] Create API client module (api.ts)
+- [x] Create InvoiceUpload component (file upload + sample selector dropdown)
+- [x] Create PipelineResult component (full result display)
+- [x] Create ValidationFindings component (findings table with severity badges)
+- [x] Create ApprovalDecision component (approved/rejected with reasons)
+- [x] Create PaymentResult component (status + reference ID)
+- [x] Add basic styling (clean, readable layout)
+- [x] Add proxy config for local dev (port 8080)
 
-### Integration
+### Integration ✓
 
-- [ ] Verify CLI still works unchanged after adding backend/frontend
-- [ ] Add run instructions to README
-- [ ] End-to-end test: upload invoice via UI → see result
+- [x] Verify CLI still works unchanged after adding backend/frontend
+- [x] Add run instructions to README
+- [x] End-to-end test: upload invoice via UI → see result
 
 ## Other Optional Enhancements
 
@@ -141,4 +141,4 @@ _This section is optional / above-and-beyond. It does not affect CLI functionali
 ---
 
 **Current Status:** All slices complete ✓ | Production-ready prototype delivered
-**Last Updated:** 2026-02-05 18:31
+**Last Updated:** 2026-02-05 20:05
