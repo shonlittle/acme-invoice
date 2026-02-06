@@ -58,7 +58,7 @@ class LLMClient:
         self.backend = "grok" if self.api_key else "mock"
 
     def chat_completion(
-        self, messages: List[Dict[str, str]], model: str = "grok-beta"
+        self, messages: List[Dict[str, str]], model: str = "grok-4-1-fast-non-reasoning"
     ) -> str:
         """
         Generate a chat completion response.
