@@ -134,6 +134,28 @@ class ApprovalDecision:
 
 
 @dataclass
+class PaymentResult:
+    """
+    Payment execution result with audit trail.
+
+    Fields:
+    - status: PAID | SKIPPED | FAILED
+    - vendor: Vendor name
+    - amount: Payment amount
+    - payment_reference_id: Stable reference (e.g., "PAY-INV-1004-20260205T131415")
+    - timestamp: When payment was attempted
+    - reason: Required for SKIPPED/FAILED (e.g., "Invoice rejected")
+    """
+
+    status: str  # PAID | SKIPPED | FAILED
+    vendor: str
+    amount: float
+    payment_reference_id: str
+    timestamp: str  # ISO format
+    reason: Optional[str] = None
+
+
+@dataclass
 class PipelineResult:
     """
     Final result of the entire pipeline execution.
@@ -146,7 +168,7 @@ class PipelineResult:
     invoice: Optional[Invoice]
     validation_findings: List[ValidationFinding]
     approval_decision: Optional[ApprovalDecision]
-    payment_result: Optional[dict]
+    payment_result: Optional[PaymentResult]
     errors: List[str]
 
 
@@ -166,5 +188,5 @@ class PipelineContext:
     parse_metadata: Optional[ParseMetadata] = None
     validation_findings: List[ValidationFinding] = field(default_factory=list)
     approval_decision: Optional[ApprovalDecision] = None
-    payment_result: Optional[dict] = None
+    payment_result: Optional[PaymentResult] = None
     errors: List[str] = field(default_factory=list)

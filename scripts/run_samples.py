@@ -46,7 +46,11 @@ def main():
                         if result.approval_decision
                         else None
                     ),
-                    "paid": result.payment_result is not None,
+                    "paid": (
+                        result.payment_result.status == "PAID"
+                        if result.payment_result
+                        else False
+                    ),
                 }
             )
         except Exception as e:
@@ -94,6 +98,9 @@ def main():
     rejected_count = sum(1 for r in results if r["approved"] is False)
     pending_count = sum(1 for r in results if r["approved"] is None)
 
+    # Payment metrics
+    paid_count = sum(1 for r in results if r["paid"] is True)
+
     if len(results) > 0:
         print(
             f"Approval rate: {approved_count}/{len(results)} ({approved_count/len(results)*100:.1f}%)"
@@ -104,6 +111,12 @@ def main():
         print(
             f"Pending rate: {pending_count}/{len(results)} ({pending_count/len(results)*100:.1f}%)"
         )
+        if approved_count > 0:
+            print(
+                f"Payment rate: {paid_count}/{approved_count} approved invoices paid ({paid_count/approved_count*100:.1f}%)"
+            )
+        else:
+            print(f"Payment rate: {paid_count}/0 approved invoices paid (0.0%)")
 
     print(f"{'='*90}\n")
 
