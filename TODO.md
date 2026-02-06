@@ -21,7 +21,7 @@
 - [x] Seed inventory with test data (WidgetA, WidgetB, GadgetX, FakeItem)
 - [x] Seed vendors with test data (Widgets Inc., Precision Parts, etc.)
 - [x] Write smoke test for DB creation
-- [ ] Write query helper functions for validation stage (deferred to Slice 3)
+- [x] Write query helper functions for validation stage (deferred to Slice 3)
 
 ## Slice 3: Validation Stage + Unit Tests ✓
 
@@ -34,7 +34,7 @@
 - [x] Implement validation rule: suspicious_vendor
 - [x] Implement validation rule: line_item_amount_mismatch
 - [x] Write unit tests for each validation rule
-- [ ] Integration test with sample invoices (requires ingestion - Slice 4)
+- [x] Integration test with sample invoices (requires ingestion - Slice 4)
 
 ## Slice 4: Ingestion for JSON/CSV/TXT ✓
 
