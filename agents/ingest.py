@@ -160,17 +160,15 @@ def parse_csv(file_path: str) -> Tuple[Invoice, ParseMetadata]:
     return invoice, metadata
 
 
-def parse_txt(file_path: str) -> Tuple[Invoice, ParseMetadata]:
+def parse_txt_from_string(content: str) -> Tuple[Invoice, ParseMetadata]:
     """
-    Parse TXT invoice with regex heuristics.
+    Parse invoice text using regex heuristics.
 
+    Extracted from parse_txt() to enable reuse for PDF parsing.
     Uses pattern matching for vendor, amount, due date, and line items.
     Provides LOW-MEDIUM confidence scores based on match success.
     """
     metadata = ParseMetadata()
-
-    with open(file_path, "r") as f:
-        content = f.read()
 
     # Regex patterns
     vendor_match = re.search(r"Vendor:\s*(.+)", content, re.IGNORECASE)
@@ -240,6 +238,93 @@ def parse_txt(file_path: str) -> Tuple[Invoice, ParseMetadata]:
     return invoice, metadata
 
 
+def parse_txt(file_path: str) -> Tuple[Invoice, ParseMetadata]:
+    """
+    Parse TXT invoice file.
+
+    Reads file content and delegates to parse_txt_from_string().
+    """
+    with open(file_path, "r") as f:
+        content = f.read()
+    return parse_txt_from_string(content)
+
+
+def parse_pdf(file_path: str) -> Tuple[Invoice, ParseMetadata]:
+    """
+    Extract text from PDF and parse using TXT heuristics.
+
+    Best-effort extraction with clear warnings about limitations.
+    """
+    metadata = ParseMetadata()
+
+    try:
+        import PyPDF2
+
+        log_event("INGEST_PDF_START", {"path": file_path})
+
+        with open(file_path, "rb") as f:
+            reader = PyPDF2.PdfReader(f)
+
+            # Extract text from all pages
+            text_parts = []
+            for page in reader.pages:
+                text_parts.append(page.extract_text())
+
+            extracted_text = "\n".join(text_parts)
+
+        # Log extraction metadata
+        metadata.field_provenance["extraction_method"] = "pdf_text_extract"
+        metadata.field_provenance["extracted_text_length"] = str(len(extracted_text))
+
+        # Warn about PDF limitations
+        metadata.parse_warnings.append(
+            "PDF text extraction is best-effort - layout/formatting may be lost"
+        )
+
+        log_event(
+            "INGEST_PDF_EXTRACTED",
+            {
+                "text_length": len(extracted_text),
+                "warnings_count": len(metadata.parse_warnings),
+            },
+        )
+
+        if not extracted_text.strip():
+            metadata.parse_warnings.append("PDF text extraction yielded empty text")
+            log_event("INGEST_PDF_END", {"status": "empty_text"})
+            return Invoice(vendor="Unknown", amount=0.0, line_items=[]), metadata
+
+        # Reuse TXT parsing logic on extracted text
+        invoice, txt_metadata = parse_txt_from_string(extracted_text)
+
+        # Merge metadata (PDF warnings + TXT extraction results)
+        metadata.parse_warnings.extend(txt_metadata.parse_warnings)
+        metadata.field_provenance.update(txt_metadata.field_provenance)
+
+        # Downgrade confidence scores for PDF (less reliable than direct TXT)
+        for field, confidence in txt_metadata.confidence_scores.items():
+            if confidence == "HIGH":
+                metadata.confidence_scores[field] = "MEDIUM"
+            elif confidence == "MEDIUM":
+                metadata.confidence_scores[field] = "LOW"
+            else:
+                metadata.confidence_scores[field] = confidence
+
+        log_event("INGEST_PDF_END", {"status": "complete"})
+
+        return invoice, metadata
+
+    except ImportError:
+        metadata.parse_warnings.append("PyPDF2 not installed - cannot extract PDF text")
+        log_event("INGEST_PDF_END", {"status": "missing_library"})
+        return Invoice(vendor="PARSE_ERROR", amount=0.0, line_items=[]), metadata
+
+    except Exception as e:
+        metadata.parse_warnings.append(f"PDF extraction failed: {str(e)}")
+        log_event("INGEST_PDF_END", {"status": "error", "error": str(e)})
+        return Invoice(vendor="PARSE_ERROR", amount=0.0, line_items=[]), metadata
+
+
 def ingest_stage(ctx: PipelineContext) -> PipelineContext:
     """
     Extract structured invoice data from the input file.
@@ -261,6 +346,8 @@ def ingest_stage(ctx: PipelineContext) -> PipelineContext:
             invoice, metadata = parse_csv(ctx.invoice_path)
         elif ext == ".txt":
             invoice, metadata = parse_txt(ctx.invoice_path)
+        elif ext == ".pdf":
+            invoice, metadata = parse_pdf(ctx.invoice_path)
         else:
             raise ValueError(f"Unsupported file type: {ext}")
 

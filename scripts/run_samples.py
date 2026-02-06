@@ -24,6 +24,7 @@ def main():
         glob.glob("data/invoices/*.json")
         + glob.glob("data/invoices/*.csv")
         + glob.glob("data/invoices/*.txt")
+        + glob.glob("data/invoices/*.pdf")
     )
 
     print(f"\n{'='*90}")
