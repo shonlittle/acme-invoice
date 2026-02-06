@@ -1,207 +1,224 @@
 # Architecture Decision Records (ADR)
 
 This document tracks key architectural decisions, trade-offs, and rationale for the invoice processing pipeline.
+It is intended to help reviewers understand *why* the system is designed the way it is, not just *how* it works.
 
 ---
 
-## Decision #1: Auto-Initialize Database in Pipeline (Option A)
+## Decision #1: Auto-Initialize Database in Pipeline
 
 **Date:** 2026-02-05  
 **Status:** Accepted  
-**Context:** Need to decide how to trigger database initialization
+
+**Context:**  
+The system requires a local SQLite database with inventory and vendor data. We needed to decide whether initialization should be manual or automatic.
 
 ### Options Considered
 
-**Option A: Auto-init in pipeline**
-
-- Call `init_database()` at the start of `pipeline/runner.py`
-- DB initializes automatically on first pipeline run
-- Idempotent design (safe to call multiple times)
-
-**Option B: Standalone initialization script**
-
-- Create `scripts/init_db.py`
-- Requires manual setup step: `python -m scripts.init_db`
-- Clearer separation of concerns
-
-### Decision
-
-**Chosen: Option A (Auto-init in pipeline)**
-
-### Rationale
-
-- **Developer ergonomics:** Zero-setup experience — just run the pipeline
-- **Reduces friction:** No manual initialization step for reviewers/users
-- **Idempotent design:** Minimal performance overhead (~1-2ms check per run)
-- **Local development friendly:** Works immediately after `git clone`
-
-### Trade-offs
+**Option A: Auto-initialize database in the pipeline (Chosen)**  
+The pipeline checks for the database on first run and initializes/seeds it automatically if missing.
 
 **Pros:**
-
-- Immediate usability
-- No forgotten setup steps
-- Aligns with "runs fully locally" requirement
+- Zero manual setup for reviewers
+- Fully runnable out of the box
+- Better developer and demo ergonomics
+- Aligns with prototype-first delivery
 
 **Cons:**
-
-- Slight performance overhead on every pipeline run (mitigated by idempotent check)
-- Mixes initialization with runtime logic (less clean separation)
-
-### Implementation Notes
-
-- `init_database()` checks if tables exist before creating
-- Seed data only inserted if tables are empty
-- Safe to call on every pipeline run
+- Slightly less explicit than a manual init step
+- Requires care to avoid accidental re-initialization
 
 ---
 
-## Decision #2: Enhanced Database Schema (Slice 1)
+## Decision #2: Agentic Pipeline Decomposition
 
 **Date:** 2026-02-05  
 **Status:** Accepted  
-**Context:** Choose between minimal schema (item + stock) vs enhanced schema (pricing, vendor trust, etc.)
 
-### Options Considered
+**Decision:**  
+Decompose invoice processing into explicit agents:
+Ingestion → Validation → Approval → Reflection → Payment.
 
-**Option A: Minimal schema**
+**Rationale:**
+- Mirrors real enterprise workflows
+- Enables independent testing and reasoning per stage
+- Makes audit, replay, and evaluation straightforward
 
-- Tables: `inventory(item, stock)`
-- Supports 4 validation rules
-
-**Option B: Enhanced schema**
-
-- Tables: `inventory(item, stock, unit_price, category, min/max_order_qty, active)`
-- Tables: `vendors(vendor_name, address, payment_terms, trusted)`
-- Supports 8 validation rules
-
-### Decision
-
-**Chosen: Option B (Enhanced schema)**
-
-### Rationale
-
-- Enables richer validation (price mismatch, vendor trust, line item amount validation)
-- Closer to production-like system
-- Sample invoices include price/vendor data — schema should reflect that
-- Demonstrates "above & beyond" sophistication
-
-### Trade-offs
-
-**Pros:**
-
-- 8 validation rules vs 4
-- Financial validation (price, tax, subtotal)
-- Vendor whitelist/blacklist functionality
-- More realistic business logic
-
-**Cons:**
-
-- More complex schema to implement
-- Slightly more seed data to manage
-- Larger surface area for bugs
-
-### Implementation Notes
-
-See `db/schema.py` for full schema definitions and seed data.
+**Trade-offs:**
+- More structure and boilerplate than a monolithic script
+- Requires well-defined contracts between agents
 
 ---
 
-## Decision #3: Grok + Deterministic Mock Fallback (Slice 1)
+## Decision #3: Deterministic-First, LLM-Optional Design
 
 **Date:** 2026-02-05  
 **Status:** Accepted  
-**Context:** Ensure pipeline runs locally without external API dependencies
 
-### Decision
+**Decision:**  
+Use deterministic logic by default, with optional LLM (Grok via xAI) integration only in the Approval → Reflection step.
 
-**LLM Client Architecture:**
+**Rationale:**
+- Business-critical logic must be predictable and testable
+- Enterprises require graceful degradation when LLMs are unavailable
+- Keeps CI and tests deterministic
 
-- Primary: xAI Grok (via `XAI_API_KEY` env var)
-- Fallback: Deterministic mock LLM (rule-based responses)
-
-### Rationale
-
-- **Local reproducibility:** System runs end-to-end even without API key
-- **Reviewer friendly:** No external dependencies to test the prototype
-- **xAI ecosystem alignment:** Supports Grok-first environments when key is available
-- **Interface-based design:** LLM backend is transparent to calling code
-
-### Implementation Notes
-
-See `llm/client.py` for interface design.
+**Trade-offs:**
+- Less “flashy” than fully LLM-driven systems
+- Some nuanced judgment is deferred until LLM is enabled
 
 ---
 
-## Decision #4: Database File Location (db/ vs Root)
+## Decision #4: Reflection Loop for Approval Decisions
 
 **Date:** 2026-02-05  
 **Status:** Accepted  
-**Context:** Initial implementation placed `inventory.db` in project root, violating best practices
 
-### Problem
+**Decision:**  
+Include a reflection/critique step that can revise the initial approval decision.
 
-Original implementation created database file at project root:
+**Rationale:**
+- Demonstrates agentic self-correction
+- Matches real-world review workflows (initial decision → second look)
+- Improves reliability without constant human oversight
 
-```
-/
-├── inventory.db  ❌ (pollutes project root)
-├── db/
-│   ├── schema.py
-│   └── inventory.py
-```
-
-**Issues:**
-
-- Clutters project root directory
-- Risk of accidental git commits
-- Poor separation of concerns (data mixed with code)
-- Not production-ready structure
-
-### Decision
-
-**Move database to `db/inventory.db`**
-
-### Rationale
-
-- **Co-location:** Database file lives with database code (`db/schema.py`, `db/inventory.py`)
-- **Clean root:** Project root stays focused on configuration and entry points
-- **Git safety:** Clear `.gitignore` pattern (`db/*.db`)
-- **Industry standard:** Common Python project convention
-- **Semantic clarity:** `db/` directory signals "this is database storage"
-
-### Implementation
-
-1. Changed default path in all `db/inventory.py` functions:
-
-   ```python
-   def init_database(db_path: str = "db/inventory.db") -> None:
-   ```
-
-2. Updated `.gitignore`:
-
-   ```
-   # Database files
-   db/*.db
-   inventory.db  # Also exclude legacy root location
-   ```
-
-3. Updated smoke test to use `db/test_inventory.db`
-
-### Trade-offs
-
-**Pros:**
-
-- Cleaner project structure
-- Better separation of concerns
-- Follows Python best practices
-- Easier to manage in production
-
-**Cons:**
-
-- Breaking change (old `inventory.db` at root won't be found)
-- Requires path update in any existing tooling
+**Trade-offs:**
+- Additional decision-modeling complexity
+- Requires careful logging for explainability
 
 ---
 
-**Last Updated:** 2026-02-05 10:40
+## Decision #5: Local-First, Fully Runnable Prototype
+
+**Date:** 2026-02-05  
+**Status:** Accepted  
+
+**Decision:**  
+Ensure the entire system runs locally with no external services required.
+
+**Rationale:**
+- Reviewer-friendly
+- Predictable execution for demos and tests
+- Matches early customer prototype constraints
+
+**Trade-offs:**
+- Mocked integrations (payment, LLM) instead of real services
+- Auth and secrets management intentionally out of scope
+
+---
+
+## Decision #6: SQLite for Inventory and Vendor Data
+
+**Date:** 2026-02-05  
+**Status:** Accepted  
+
+**Decision:**  
+Use SQLite as the backing store for inventory and vendor data.
+
+**Rationale:**
+- Zero setup
+- Clear, inspectable SQL schema
+- Sufficient for prototype scale
+
+**Trade-offs:**
+- Not horizontally scalable
+- Limited concurrency guarantees
+
+---
+
+## Decision #7: Structured Logs and JSON Artifacts
+
+**Date:** 2026-02-05  
+**Status:** Accepted  
+
+**Decision:**  
+Emit structured logs at each stage and persist PipelineResult JSON artifacts.
+
+**Rationale:**
+- Enables debugging and auditability
+- Supports future history and metrics features
+- Aligns with enterprise observability expectations
+
+**Trade-offs:**
+- Slight logging overhead
+- Requires discipline to keep schemas stable
+
+---
+
+## Decision #8: CLI as Canonical Interface
+
+**Date:** 2026-02-05  
+**Status:** Accepted  
+
+**Decision:**  
+Treat the CLI as the primary interface; UI is a thin optional wrapper.
+
+**Rationale:**
+- Easiest surface to test and automate
+- Prevents UI concerns from leaking into business logic
+- Backend and API reuse the same execution path
+
+**Trade-offs:**
+- Less immediately friendly without UI
+- Requires wrapper for non-technical users
+
+---
+
+## Decision #9: FastAPI + React for Optional Web UI
+
+**Date:** 2026-02-05  
+**Status:** Accepted  
+
+**Decision:**  
+Use FastAPI (backend) and React + TypeScript (frontend) for the optional web UI.
+
+**Rationale:**
+- Production-shaped, widely adopted stack
+- Clear separation of concerns
+- Familiar to enterprise teams
+
+**Trade-offs:**
+- More setup than single-file UI frameworks
+- Requires packaging (Docker) for easiest launch
+
+---
+
+## Decision #10: Docker as Optional Packaging Layer
+
+**Date:** 2026-02-05  
+**Status:** Accepted  
+
+**Decision:**  
+Treat Docker and docker-compose as optional, not required.
+
+**Rationale:**
+- Demonstrates deployability without forcing tooling
+- Keeps local dev friction low
+- Matches forward-deployed realities
+
+**Trade-offs:**
+- Additional files to maintain
+- Risk of over-engineering if introduced too early
+
+---
+
+## Decision #11: Explicit Scope Control via TODO.md
+
+**Date:** 2026-02-05  
+**Status:** Accepted  
+
+**Decision:**  
+Explicitly mark “Above & Beyond” features as optional in TODO.md.
+
+**Rationale:**
+- Prevents scope creep
+- Communicates delivery discipline
+- Helps reviewers separate core requirements from extensions
+
+**Trade-offs:**
+- Attractive features intentionally deferred
+- Requires clear documentation to avoid misinterpretation
+
+---
+
+**Last Updated:** {datetime.now().strftime("%Y-%m-%d %H:%M")}
