@@ -198,7 +198,7 @@ def run_all_samples():
     for group_key, group in invoice_groups.items():
         # Check if this is a filename-based group
         if group_key.startswith("_nonum_"):
-            # Extract the base filename (e.g., "invoice_1013" from "_nonum_invoice_1013")
+            # Extract the base filename
             base_name = group_key.replace("_nonum_", "")
 
             # Try to find a matching invoice_number group
