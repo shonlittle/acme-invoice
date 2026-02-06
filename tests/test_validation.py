@@ -2,11 +2,13 @@
 """
 Unit tests for validation stage.
 
-Tests all 4 core validation rules:
-- UNKNOWN_ITEM
-- NEGATIVE_QTY
-- EXCEEDS_STOCK
-- OUT_OF_STOCK
+Tests all 6 validation rules:
+- UNKNOWN_VENDOR (vendor-level)
+- SUSPICIOUS_VENDOR (vendor-level)
+- UNKNOWN_ITEM (line-item-level)
+- NEGATIVE_QTY (line-item-level)
+- EXCEEDS_STOCK (line-item-level)
+- OUT_OF_STOCK (line-item-level)
 
 Uses in-memory SQLite DB with known test data for determinism.
 """
@@ -24,9 +26,16 @@ from agents.validate import validate_stage  # noqa: E402
 from db.inventory import init_database  # noqa: E402
 from models import Invoice, LineItem, PipelineContext  # noqa: E402
 
+# Known vendor from seed data (trusted)
+KNOWN_VENDOR = "Widgets Inc."
+# Untrusted vendor from seed data
+SUSPICIOUS_VENDOR_NAME = "NoProd Industries"
+# Vendor not in DB at all
+UNKNOWN_VENDOR_NAME = "Ghost Corp"
+
 
 def make_test_invoice(
-    vendor="Test Vendor",
+    vendor=KNOWN_VENDOR,
     amount=1000.0,
     line_items=None,
     invoice_number="TEST-001",
@@ -35,7 +44,7 @@ def make_test_invoice(
     Helper to create test Invoice objects without ingestion.
 
     Args:
-        vendor: Vendor name
+        vendor: Vendor name (default: known trusted vendor)
         amount: Total amount
         line_items: List of (item_name, quantity) tuples
         invoice_number: Invoice ID
@@ -65,12 +74,98 @@ def test_db():
 
     # Initialize with standard seed data
     # Inventory: WidgetA (15), WidgetB (10), GadgetX (5), FakeItem (0)
+    # Vendors: Widgets Inc. (trusted), NoProd Industries (untrusted)
     init_database(db_path)
 
     yield db_path
 
     # Cleanup
     os.remove(db_path)
+
+
+# ------------------------------------------------------------------
+# Vendor-level rules
+# ------------------------------------------------------------------
+
+
+def test_unknown_vendor(test_db):
+    """UNKNOWN_VENDOR: Vendor not in DB should trigger WARN."""
+    invoice = make_test_invoice(
+        vendor=UNKNOWN_VENDOR_NAME,
+        line_items=[("WidgetA", 1)],
+    )
+
+    ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
+    ctx = validate_stage(ctx)
+
+    vendor_findings = [f for f in ctx.validation_findings if f.code == "UNKNOWN_VENDOR"]
+    assert len(vendor_findings) == 1
+
+    finding = vendor_findings[0]
+    assert finding.severity == "WARN"
+    assert finding.item_name == UNKNOWN_VENDOR_NAME
+    assert "not found" in finding.message
+    assert "vendor database" in finding.message
+
+
+def test_suspicious_vendor(test_db):
+    """SUSPICIOUS_VENDOR: Untrusted vendor should trigger WARN."""
+    invoice = make_test_invoice(
+        vendor=SUSPICIOUS_VENDOR_NAME,
+        line_items=[("WidgetA", 1)],
+    )
+
+    ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
+    ctx = validate_stage(ctx)
+
+    vendor_findings = [
+        f for f in ctx.validation_findings if f.code == "SUSPICIOUS_VENDOR"
+    ]
+    assert len(vendor_findings) == 1
+
+    finding = vendor_findings[0]
+    assert finding.severity == "WARN"
+    assert finding.item_name == SUSPICIOUS_VENDOR_NAME
+    assert "untrusted" in finding.message
+
+
+def test_known_trusted_vendor_no_finding(test_db):
+    """Known trusted vendor should produce no vendor findings."""
+    invoice = make_test_invoice(
+        vendor=KNOWN_VENDOR,
+        line_items=[("WidgetA", 1)],
+    )
+
+    ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
+    ctx = validate_stage(ctx)
+
+    vendor_findings = [
+        f
+        for f in ctx.validation_findings
+        if f.code in ("UNKNOWN_VENDOR", "SUSPICIOUS_VENDOR")
+    ]
+    assert len(vendor_findings) == 0
+
+
+def test_vendor_and_item_findings_combined(test_db):
+    """Unknown vendor + unknown item should produce both findings."""
+    invoice = make_test_invoice(
+        vendor=UNKNOWN_VENDOR_NAME,
+        line_items=[("SuperGizmo", 5)],
+    )
+
+    ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
+    ctx = validate_stage(ctx)
+
+    codes = [f.code for f in ctx.validation_findings]
+    assert "UNKNOWN_VENDOR" in codes
+    assert "UNKNOWN_ITEM" in codes
+    assert len(ctx.validation_findings) == 2
+
+
+# ------------------------------------------------------------------
+# Line-item-level rules
+# ------------------------------------------------------------------
 
 
 def test_unknown_item(test_db):
@@ -81,10 +176,10 @@ def test_unknown_item(test_db):
     ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
     ctx = validate_stage(ctx)
 
-    assert len(ctx.validation_findings) == 1
-    finding = ctx.validation_findings[0]
+    item_findings = [f for f in ctx.validation_findings if f.code == "UNKNOWN_ITEM"]
+    assert len(item_findings) == 1
 
-    assert finding.code == "UNKNOWN_ITEM"
+    finding = item_findings[0]
     assert finding.severity == "ERROR"
     assert finding.item_name == "SuperGizmo"
     assert finding.requested_qty == 5
@@ -94,16 +189,15 @@ def test_unknown_item(test_db):
 
 def test_negative_quantity(test_db):
     """NEGATIVE_QTY: Quantity < 0 should trigger ERROR."""
-    # Negative quantity
     invoice = make_test_invoice(line_items=[("WidgetA", -5)])
 
     ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
     ctx = validate_stage(ctx)
 
-    assert len(ctx.validation_findings) == 1
-    finding = ctx.validation_findings[0]
+    item_findings = [f for f in ctx.validation_findings if f.code == "NEGATIVE_QTY"]
+    assert len(item_findings) == 1
 
-    assert finding.code == "NEGATIVE_QTY"
+    finding = item_findings[0]
     assert finding.severity == "ERROR"
     assert finding.item_name == "WidgetA"
     assert finding.requested_qty == -5
@@ -119,10 +213,10 @@ def test_exceeds_stock(test_db):
     ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
     ctx = validate_stage(ctx)
 
-    assert len(ctx.validation_findings) == 1
-    finding = ctx.validation_findings[0]
+    item_findings = [f for f in ctx.validation_findings if f.code == "EXCEEDS_STOCK"]
+    assert len(item_findings) == 1
 
-    assert finding.code == "EXCEEDS_STOCK"
+    finding = item_findings[0]
     assert finding.severity == "ERROR"
     assert finding.item_name == "GadgetX"
     assert finding.requested_qty == 20
@@ -132,15 +226,16 @@ def test_exceeds_stock(test_db):
 
 def test_out_of_stock(test_db):
     """OUT_OF_STOCK: Stock == 0 and qty > 0 should trigger ERROR."""
-    invoice = make_test_invoice(line_items=[("FakeItem", 3)])  # Stock is 0
+    # Stock is 0
+    invoice = make_test_invoice(line_items=[("FakeItem", 3)])
 
     ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
     ctx = validate_stage(ctx)
 
-    assert len(ctx.validation_findings) == 1
-    finding = ctx.validation_findings[0]
+    item_findings = [f for f in ctx.validation_findings if f.code == "OUT_OF_STOCK"]
+    assert len(item_findings) == 1
 
-    assert finding.code == "OUT_OF_STOCK"
+    finding = item_findings[0]
     assert finding.severity == "ERROR"
     assert finding.item_name == "FakeItem"
     assert finding.requested_qty == 3
@@ -150,7 +245,7 @@ def test_out_of_stock(test_db):
 
 def test_quantity_equals_stock_ok(test_db):
     """Edge case: quantity == stock should pass with no findings."""
-    # Exactly 5 in stock
+    # Exactly 5 in stock, known vendor
     invoice = make_test_invoice(line_items=[("GadgetX", 5)])
 
     ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
@@ -161,7 +256,8 @@ def test_quantity_equals_stock_ok(test_db):
 
 def test_quantity_less_than_stock_ok(test_db):
     """Edge case: quantity < stock should pass with no findings."""
-    invoice = make_test_invoice(line_items=[("WidgetA", 10)])  # 15 available
+    # 15 available, known vendor
+    invoice = make_test_invoice(line_items=[("WidgetA", 10)])
 
     ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
     ctx = validate_stage(ctx)
@@ -170,8 +266,8 @@ def test_quantity_less_than_stock_ok(test_db):
 
 
 def test_empty_line_items(test_db):
-    """Edge case: No line items should result in no findings."""
-    invoice = make_test_invoice(line_items=[])  # Empty
+    """Edge case: No line items with known vendor = no findings."""
+    invoice = make_test_invoice(line_items=[])
 
     ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
     ctx = validate_stage(ctx)
@@ -193,6 +289,7 @@ def test_multiple_findings(test_db):
     ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
     ctx = validate_stage(ctx)
 
+    # 4 line-item findings (no vendor finding — known vendor)
     assert len(ctx.validation_findings) == 4
 
     codes = [f.code for f in ctx.validation_findings]
@@ -223,6 +320,7 @@ def test_mixed_valid_invalid_items(test_db):
     ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
     ctx = validate_stage(ctx)
 
+    # Only 1 finding: UNKNOWN_ITEM (vendor is known)
     assert len(ctx.validation_findings) == 1
     assert ctx.validation_findings[0].code == "UNKNOWN_ITEM"
 

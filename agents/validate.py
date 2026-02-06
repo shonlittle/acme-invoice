@@ -2,6 +2,8 @@
 Validation stage: Check invoice data against inventory/vendor database.
 
 Validation rules implemented:
+- UNKNOWN_VENDOR: Vendor not in vendors table
+- SUSPICIOUS_VENDOR: Vendor flagged as untrusted
 - UNKNOWN_ITEM: Item not in inventory database
 - NEGATIVE_QTY: Quantity < 0
 - EXCEEDS_STOCK: Requested quantity > available stock
@@ -9,12 +11,10 @@ Validation rules implemented:
 
 Future rules (not in this slice):
 - price_mismatch: Invoice unit_price != database unit_price
-- unknown_vendor: Vendor not in whitelist
-- suspicious_vendor: Vendor flagged as untrusted
 - line_item_amount_mismatch: quantity × unit_price != stated amount
 """
 
-from db.inventory import get_item_info
+from db.inventory import get_item_info, get_vendor_info
 from models import PipelineContext, ValidationFinding
 from utils.logging import log_event
 
@@ -23,11 +23,13 @@ def validate_stage(ctx: PipelineContext) -> PipelineContext:
     """
     Validate invoice data against inventory database.
 
-    Implements 4 core validation rules:
-    - UNKNOWN_ITEM
-    - NEGATIVE_QTY
-    - EXCEEDS_STOCK
-    - OUT_OF_STOCK
+    Implements 6 validation rules:
+    - UNKNOWN_VENDOR (vendor-level)
+    - SUSPICIOUS_VENDOR (vendor-level)
+    - UNKNOWN_ITEM (line-item-level)
+    - NEGATIVE_QTY (line-item-level)
+    - EXCEEDS_STOCK (line-item-level)
+    - OUT_OF_STOCK (line-item-level)
 
     Populates ctx.validation_findings with structured findings.
     """
@@ -47,6 +49,30 @@ def validate_stage(ctx: PipelineContext) -> PipelineContext:
 
     findings = []
 
+    # --- Vendor-level rules ---
+    vendor_name = ctx.invoice.vendor
+    vendor_info = get_vendor_info(vendor_name)
+
+    if vendor_info is None:
+        findings.append(
+            ValidationFinding(
+                code="UNKNOWN_VENDOR",
+                severity="WARN",
+                message=(f"Vendor '{vendor_name}' not found " f"in vendor database"),
+                item_name=vendor_name,
+            )
+        )
+    elif vendor_info["trusted"] == 0:
+        findings.append(
+            ValidationFinding(
+                code="SUSPICIOUS_VENDOR",
+                severity="WARN",
+                message=(f"Vendor '{vendor_name}' is flagged " f"as untrusted"),
+                item_name=vendor_name,
+            )
+        )
+
+    # --- Line-item-level rules ---
     for line_item in ctx.invoice.line_items:
         # Rule: NEGATIVE_QTY
         if line_item.quantity < 0:
