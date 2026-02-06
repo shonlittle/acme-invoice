@@ -216,3 +216,6 @@ inventory.db
 # Output
 out/*.json
 !out/.gitkeep
+
+# VSCode (project settings committed for consistent linting)
+# .vscode/settings.json is intentionally tracked
