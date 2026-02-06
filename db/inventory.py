@@ -5,10 +5,12 @@ Provides:
 - SQLite database initialization with inventory and vendors tables
 - Seed data for testing and development
 - Query helpers for validation rules
+- Context-managed connection handling
 """
 
 import sqlite3
-from typing import Optional, Tuple
+from contextlib import contextmanager
+from typing import Dict, List, Optional, Tuple
 
 from db.schema import (
     INVENTORY_SEED_DATA,
@@ -17,8 +19,30 @@ from db.schema import (
     VENDORS_TABLE_SQL,
 )
 
+DEFAULT_DB_PATH = "db/inventory.db"
 
-def init_database(db_path: str = "db/inventory.db") -> None:
+
+@contextmanager
+def get_connection(db_path: str = DEFAULT_DB_PATH):
+    """
+    Context manager for SQLite connections.
+
+    Yields a connection with row_factory set to sqlite3.Row
+    for dict-like access. Automatically closes on exit.
+
+    Usage:
+        with get_connection() as conn:
+            row = conn.execute("SELECT ...").fetchone()
+    """
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
+def init_database(db_path: str = DEFAULT_DB_PATH) -> None:
     """
     Initialize the inventory database with schema and seed data.
 
@@ -28,7 +52,7 @@ def init_database(db_path: str = "db/inventory.db") -> None:
     This function is idempotent - safe to call multiple times.
 
     Args:
-        db_path: Path to SQLite database file (default: inventory.db)
+        db_path: Path to SQLite database file
     """
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -50,7 +74,8 @@ def init_database(db_path: str = "db/inventory.db") -> None:
         cursor.execute("SELECT COUNT(*) FROM vendors")
         if cursor.fetchone()[0] == 0:
             cursor.executemany(
-                "INSERT INTO vendors VALUES (?, ?, ?, ?)", VENDORS_SEED_DATA
+                "INSERT INTO vendors VALUES (?, ?, ?, ?)",
+                VENDORS_SEED_DATA,
             )
 
         conn.commit()
@@ -58,58 +83,66 @@ def init_database(db_path: str = "db/inventory.db") -> None:
         conn.close()
 
 
-def get_item_info(item: str, db_path: str = "db/inventory.db") -> Optional[dict]:
+# ---------------------------------------------------------------------------
+# Query helpers
+# ---------------------------------------------------------------------------
+
+
+def get_item_info(
+    item: str, db_path: str = DEFAULT_DB_PATH
+) -> Optional[Dict[str, object]]:
     """
-    Query inventory for an item.
+    Query inventory for an item by name.
 
     Returns dict with keys: item, stock, unit_price, category,
-    min_order_qty, max_order_qty, active. Returns None if not found.
+    min_order_qty, max_order_qty, active.
+    Returns None if not found.
     """
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT item, stock, unit_price, category, min_order_qty, "
-        "max_order_qty, active FROM inventory WHERE item = ?",
-        (item,),
-    )
-    row = cursor.fetchone()
-    conn.close()
+    with get_connection(db_path) as conn:
+        row = conn.execute(
+            "SELECT item, stock, unit_price, category, "
+            "min_order_qty, max_order_qty, active "
+            "FROM inventory WHERE item = ?",
+            (item,),
+        ).fetchone()
 
     if row is None:
         return None
 
-    return {
-        "item": row[0],
-        "stock": row[1],
-        "unit_price": row[2],
-        "category": row[3],
-        "min_order_qty": row[4],
-        "max_order_qty": row[5],
-        "active": row[6],
-    }
+    return dict(row)
 
 
 def get_vendor_info(
-    vendor_name: str, db_path: str = "db/inventory.db"
-) -> Optional[dict]:
+    vendor_name: str, db_path: str = DEFAULT_DB_PATH
+) -> Optional[Dict[str, object]]:
     """
     Query vendors table for vendor information.
 
-    Returns dict with keys: vendor_name, address, payment_terms, trusted
-    Returns None if vendor not found.
-
+    Returns dict with keys: vendor_name, address, payment_terms,
+    trusted. Returns None if vendor not found.
     """
-    return None
+    with get_connection(db_path) as conn:
+        row = conn.execute(
+            "SELECT vendor_name, address, payment_terms, trusted "
+            "FROM vendors WHERE vendor_name = ?",
+            (vendor_name,),
+        ).fetchone()
+
+    if row is None:
+        return None
+
+    return dict(row)
 
 
 def check_stock_availability(
-    item: str, quantity: int, db_path: str = "db/inventory.db"
+    item: str,
+    quantity: int,
+    db_path: str = DEFAULT_DB_PATH,
 ) -> Tuple[bool, str]:
     """
     Check if requested quantity is available in stock.
 
-    Returns (is_available, message)
+    Returns (is_available, message).
 
     Examples:
     - Item not in DB: (False, "Item not found in inventory")
@@ -118,11 +151,9 @@ def check_stock_availability(
     - Stock == 0: (False, "Item out of stock")
     - Valid: (True, "OK")
     """
-    # Check for negative quantity
     if quantity < 0:
         return (False, f"Invalid quantity: {quantity}")
 
-    # Query inventory
     item_info = get_item_info(item, db_path)
 
     if item_info is None:
@@ -134,6 +165,49 @@ def check_stock_availability(
         return (False, "Item out of stock")
 
     if quantity > stock:
-        return (False, f"Requested {quantity}, only {stock} in stock")
+        return (
+            False,
+            f"Requested {quantity}, only {stock} in stock",
+        )
 
     return (True, "OK")
+
+
+# ---------------------------------------------------------------------------
+# Debug / listing helpers
+# ---------------------------------------------------------------------------
+
+
+def list_inventory(
+    db_path: str = DEFAULT_DB_PATH,
+) -> List[Dict[str, object]]:
+    """
+    Return all inventory rows as a list of dicts.
+
+    Useful for debugging and test assertions.
+    """
+    with get_connection(db_path) as conn:
+        rows = conn.execute(
+            "SELECT item, stock, unit_price, category, "
+            "min_order_qty, max_order_qty, active "
+            "FROM inventory ORDER BY item"
+        ).fetchall()
+
+    return [dict(r) for r in rows]
+
+
+def list_vendors(
+    db_path: str = DEFAULT_DB_PATH,
+) -> List[Dict[str, object]]:
+    """
+    Return all vendor rows as a list of dicts.
+
+    Useful for debugging and test assertions.
+    """
+    with get_connection(db_path) as conn:
+        rows = conn.execute(
+            "SELECT vendor_name, address, payment_terms, trusted "
+            "FROM vendors ORDER BY vendor_name"
+        ).fetchall()
+
+    return [dict(r) for r in rows]
