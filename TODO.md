@@ -94,9 +94,42 @@
 - [x] Verify all tests pass (36/36 tests passing)
 - [x] Final end-to-end test with all samples
 
-## Optional Enhancements (Above & Beyond)
+## Above & Beyond: Web UI — FastAPI + React (Optional)
 
-- [ ] Web UI for invoice submission
+_This section is optional / above-and-beyond. It does not affect CLI functionality._
+
+### Backend (FastAPI)
+
+- [ ] Create backend/ directory with FastAPI app scaffold
+- [ ] Implement POST /api/process endpoint (file upload → run_pipeline)
+- [ ] Implement GET /api/samples endpoint (list data/invoices/)
+- [ ] Implement POST /api/process-sample endpoint (sample path → run_pipeline)
+- [ ] Implement GET /api/health endpoint
+- [ ] Add Pydantic response schemas matching PipelineResult
+- [ ] Add CORS middleware for local dev
+- [ ] Add backend/requirements.txt (fastapi, uvicorn, python-multipart)
+- [ ] Write backend smoke test
+
+### Frontend (React + TypeScript)
+
+- [ ] Scaffold React app with TypeScript (Create React App or Vite)
+- [ ] Create API client module (api.ts)
+- [ ] Create InvoiceUpload component (file upload + sample selector dropdown)
+- [ ] Create PipelineResult component (full result display)
+- [ ] Create ValidationFindings component (findings table with severity badges)
+- [ ] Create ApprovalDecision component (approved/rejected with reasons)
+- [ ] Create PaymentResult component (status + reference ID)
+- [ ] Add basic styling (clean, readable layout)
+- [ ] Add proxy config for local dev (port 8000)
+
+### Integration
+
+- [ ] Verify CLI still works unchanged after adding backend/frontend
+- [ ] Add run instructions to README
+- [ ] End-to-end test: upload invoice via UI → see result
+
+## Other Optional Enhancements
+
 - [ ] Batch processing mode
 - [ ] Export results to CSV/JSON
 - [ ] Historical audit log
@@ -108,4 +141,4 @@
 ---
 
 **Current Status:** All slices complete ✓ | Production-ready prototype delivered
-**Last Updated:** 2026-02-05 18:05
+**Last Updated:** 2026-02-05 18:20
