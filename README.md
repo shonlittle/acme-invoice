@@ -1,5 +1,24 @@
 # Invoice Processing Prototype
 
+## Overview
+
+Acme Corp loses **$2M/year** on manual invoice processing due to:
+
+- 30% error rate from manual data entry
+- 5-day processing delays
+- Frustrated stakeholders across finance and operations
+
+This system automates the end-to-end invoice workflow with a **4-stage agentic pipeline**:
+
+1. **Ingest** — Extract structured data from invoices (PDF/JSON/CSV/TXT)
+2. **Validate** — Check against inventory database for errors
+3. **Approve** — Simulate VP review with reflection/critique loop
+4. **Pay** — Execute mock payment if approved
+
+**Impact:** Reduce errors, accelerate processing, provide audit trail.
+
+---
+
 ## Quick Start
 
 ### 1. Setup Virtual Environment
@@ -70,7 +89,195 @@ If PDF extraction fails or yields empty text, the pipeline continues with a mini
 
 ---
 
+## How to Run
+
+### Single Invoice
+
+```bash
+python main.py --invoice_path=data/invoices/invoice_1004.json
+```
+
+### All Sample Invoices (Batch Mode)
+
+```bash
+python main.py --run_all
+# Processes 19 invoices, saves JSON to out/
+```
+
+**Alternative (same result):**
+
+```bash
+python scripts/run_samples.py
+```
+
+### Run Tests
+
+```bash
+pytest tests/ -v
+# 24 unit tests covering validation, approval, payment gating
+```
+
+---
+
 ## Architecture
+
+**Pipeline Flow:**
+
+```
+main.py → run_pipeline()
+├── INGEST   (PDF/JSON/CSV/TXT → Invoice with metadata)
+├── VALIDATE (Check inventory.db for stock/errors)
+├── APPROVE  (Rule-based + reflection/critique loop)
+└── PAY      (Execute mock payment if approved)
+```
+
+**Stage Responsibilities:**
+
+- **Ingest:** Extract vendor, amount, line items, due date. Handles missing/malformed data gracefully.
+- **Validate:** 4 rules — unknown_item, negative_qty, exceeds_stock, out_of_stock
+- **Approve:** $10K threshold + ERROR-level findings trigger rejection. Optional LLM reflection loop.
+- **Pay:** Gated on approval. Mock payment always succeeds. Full audit trail.
+
+**Observable:** Structured logs at every stage (STAGE_START, STAGE_END, decision points).
+
+---
+
+## Optional xAI/Grok Integration
+
+The approval stage supports **optional Grok integration** for LLM-powered decision reasoning:
+
+**With Grok (optional):**
+
+```bash
+# Create .env file
+echo "XAI_API_KEY=your_key_here" > .env
+
+# Run pipeline (uses Grok for approval reasoning)
+python main.py --invoice_path=data/invoices/invoice_1004.json
+```
+
+**Without Grok (default):**
+
+```bash
+# No .env or XAI_API_KEY → uses deterministic mock
+python main.py --invoice_path=data/invoices/invoice_1004.json
+```
+
+**Fallback Behavior:**
+
+- If `XAI_API_KEY` not set → deterministic mock (always works)
+- If Grok API fails → falls back to mock (graceful degradation)
+- Uses stdlib `urllib` for HTTP (no external SDK required)
+
+**Why This Matters:**
+
+- Reviewers can run the system with **zero setup** (no API key needed)
+- Production can enable Grok for richer reasoning
+- System never crashes due to missing/failed LLM calls
+
+---
+
+## Assumptions & Tradeoffs
+
+**Ingestion:**
+
+- PDF extraction: best-effort, digital text only (no OCR)
+- Layout/formatting loss expected for PDFs
+- CSV/JSON parsing is HIGH confidence; TXT/PDF is LOW-MEDIUM
+
+**Validation:**
+
+- 4 rules implemented (stock checks, negative qty)
+- No duplicate invoice detection
+- No price mismatch validation (line item amounts)
+- Vendor trust flag exists in DB but not used in approval logic yet
+
+**Approval:**
+
+- Rule-based policy: $10K threshold + ERROR-level findings → reject
+- Reflection loop can revise initial decision
+- Deterministic mock provides consistent test behavior
+
+**Payment:**
+
+- Mock payment always succeeds (no real banking integration)
+- Strict gating: payment only if approved
+- Full audit trail with reference IDs
+
+**Design Philosophy:**
+
+- Prefer stdlib over external dependencies (urllib vs requests, manual .env parsing)
+- Graceful degradation everywhere (never crash, return minimal data on error)
+- Observable by default (structured logs, confidence scores, provenance tracking)
+
+---
+
+## Limitations
+
+**Current Scope:**
+
+- PDF parsing: layout/formatting loss expected (uses PyPDF2 text extraction)
+- No OCR support for scanned invoices
+- No duplicate invoice detection
+- No vendor fraud scoring (trust flag not used in approval logic)
+- No email notifications
+- No batch retry/recovery mechanisms
+- Mock payment only (no real banking API)
+
+**Test Coverage:**
+
+- 24 unit tests covering core business logic
+- End-to-end integration tests via `python main.py --run_all`
+- No formal load/performance testing
+
+---
+
+## Next Steps (Production-Oriented)
+
+**Near-term (1-2 sprints):**
+
+- Add vendor fraud scoring to approval logic (use trust flag)
+- Implement duplicate invoice detection (check invoice_number history)
+- Add price mismatch validation rule (verify line item amounts)
+- Integrate with real banking API for payments (replace mock_payment)
+
+**Medium-term (3-6 months):**
+
+- Web UI for invoice submission and approval workflow
+- Historical audit log with queryable interface (SQLite → PostgreSQL)
+- Email/Slack notifications for approval requests
+- Batch processing with retry logic and dead-letter queue
+
+**Long-term (6-12 months):**
+
+- OCR support for scanned invoices (Tesseract or cloud OCR service)
+- ML-based anomaly detection (flag suspicious patterns)
+- Multi-currency support (FX rate lookups)
+- Integration with ERP systems (SAP, Oracle, NetSuite)
+
+---
+
+## Test Coverage
+
+The system includes **24 unit tests** covering:
+
+- Database initialization and seeding (idempotency, seed data)
+- Validation rules (unknown_item, negative_qty, exceeds_stock, out_of_stock)
+- Approval logic (rule-based decisions, reflection/revision scenarios)
+- Payment gating (approved → paid, rejected → skipped)
+- PDF ingestion (text extraction, confidence downgrade)
+
+**Run tests:**
+
+```bash
+pytest tests/ -v
+```
+
+**Scope Note:** Tests focus on core business logic. End-to-end integration across all file formats is demonstrated via `python main.py --run_all`.
+
+---
+
+## Architecture (Detailed)
 
 ```
 main.py (CLI)
