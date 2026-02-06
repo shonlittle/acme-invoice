@@ -257,6 +257,38 @@ python main.py --invoice_path=data/invoices/invoice_1004.json
 
 ---
 
+## Web UI (FastAPI + React)
+
+### Start Backend
+
+```bash
+# Option A: Local Python
+uvicorn backend.app:app --reload --port 8080
+
+# Option B: Docker (see "Run with Docker" below)
+docker compose up --build
+```
+
+### Start Frontend
+
+```bash
+cd frontend
+npm install    # first time only
+npm run dev    # starts on http://localhost:5173
+```
+
+Open **http://localhost:5173** in your browser.
+
+The Vite dev server proxies `/api/*` requests to the backend on port 8080.
+
+### Using the UI
+
+1. **Select a sample** from the dropdown (populated from `/api/samples`), OR **upload an invoice file**
+2. Click **▶ Run Pipeline**
+3. View results: summary cards (vendor, amount, findings, approval, payment) + collapsible raw JSON
+
+---
+
 ## Run with Docker (Optional)
 
 Start the backend API with Docker Compose (no local Python setup needed):
