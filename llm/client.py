@@ -70,8 +70,6 @@ class LLMClient:
         Returns:
             String response from LLM
 
-        TODO: [Slice 5] Implement actual Grok API call
-        TODO: [Slice 5] Implement deterministic mock response
         """
         if self.backend == "grok":
             return self._grok_completion(messages, model)
