@@ -24,6 +24,47 @@ export default function MetricsPanel({ result }: Props) {
     <div className="metrics-panel">
       <h3>📈 Detailed Metrics</h3>
 
+      {findings.length > 0 && (
+        <div className="metrics-section">
+          <h4>Findings Details</h4>
+          <table className="metrics-table findings-details-table">
+            <thead>
+              <tr>
+                <th>Severity</th>
+                <th>Code</th>
+                <th>Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              {findings.map((finding, idx) => (
+                <tr key={idx}>
+                  <td>
+                    <span
+                      className={`badge badge-${finding.severity.toLowerCase()}`}
+                    >
+                      {finding.severity}
+                    </span>
+                  </td>
+                  <td>{finding.code}</td>
+                  <td>
+                    {finding.message}
+                    {finding.item_name && (
+                      <div className="finding-detail">
+                        Item: {finding.item_name}
+                        {finding.requested_qty !== null &&
+                          ` (Requested: ${finding.requested_qty})`}
+                        {finding.available_qty !== null &&
+                          ` (Available: ${finding.available_qty})`}
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       <div className="metrics-section">
         <h4>Findings by Severity</h4>
         {Object.keys(findingsBySeverity).length > 0 ? (

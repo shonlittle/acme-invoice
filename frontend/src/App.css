@@ -355,6 +355,30 @@ body {
   margin: 0;
 }
 
+/* ===== Findings Details Table ===== */
+.findings-details-table {
+  font-size: 0.875rem;
+}
+
+.findings-details-table th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #475569;
+  padding: 0.5rem 0.75rem;
+}
+
+.findings-details-table td {
+  vertical-align: top;
+  padding: 0.75rem;
+}
+
+.finding-detail {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
 /* ===== Batch Metrics ===== */
 .batch-metrics {
   background: #fff;
