@@ -83,6 +83,7 @@ def parse_json(file_path: str) -> Tuple[Invoice, ParseMetadata]:
         tax_amount=data.get("tax_amount"),
         currency=data.get("currency", "USD"),
         payment_terms=data.get("payment_terms"),
+        revision=data.get("revision"),
     )
 
     return invoice, metadata
@@ -155,6 +156,7 @@ def parse_csv(file_path: str) -> Tuple[Invoice, ParseMetadata]:
         invoice_number=fields.get("invoice_number"),
         due_date=fields.get("due_date"),
         payment_terms=fields.get("payment_terms"),
+        revision=fields.get("revision"),
     )
 
     return invoice, metadata
@@ -178,6 +180,7 @@ def parse_txt_from_string(content: str) -> Tuple[Invoice, ParseMetadata]:
     )
     due_date_match = re.search(r"Due Date:\s*(\d{4}-\d{2}-\d{2})", content)
     payment_terms_match = re.search(r"Payment Terms:\s*(.+)", content, re.IGNORECASE)
+    revision_match = re.search(r"Revision:\s*(.+)", content, re.IGNORECASE)
 
     # Extract vendor
     if vendor_match:
@@ -233,6 +236,7 @@ def parse_txt_from_string(content: str) -> Tuple[Invoice, ParseMetadata]:
         payment_terms=(
             payment_terms_match.group(1).strip() if payment_terms_match else None
         ),
+        revision=revision_match.group(1).strip() if revision_match else None,
     )
 
     return invoice, metadata

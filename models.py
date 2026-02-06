@@ -49,6 +49,7 @@ class Invoice:
     - due_date, invoice_number, vendor_address
     - subtotal, tax_rate, tax_amount (for financial validation)
     - payment_terms, currency
+    - revision: Revision identifier (e.g., "R1", "R2") if invoice is revised
     """
 
     vendor: str
@@ -62,6 +63,7 @@ class Invoice:
     tax_amount: Optional[float] = None
     currency: str = "USD"
     payment_terms: Optional[str] = None
+    revision: Optional[str] = None
 
 
 @dataclass
