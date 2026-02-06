@@ -8,10 +8,8 @@ Validation rules implemented:
 - NEGATIVE_QTY: Quantity < 0
 - EXCEEDS_STOCK: Requested quantity > available stock
 - OUT_OF_STOCK: Item has 0 stock (and qty > 0)
-
-Future rules (not in this slice):
-- price_mismatch: Invoice unit_price != database unit_price
-- line_item_amount_mismatch: quantity × unit_price != stated amount
+- PRICE_MISMATCH: Invoice unit_price != database unit_price
+- LINE_ITEM_AMOUNT_MISMATCH: qty × unit_price != stated line amount
 """
 
 from db.inventory import get_item_info, get_vendor_info
@@ -23,13 +21,15 @@ def validate_stage(ctx: PipelineContext) -> PipelineContext:
     """
     Validate invoice data against inventory database.
 
-    Implements 6 validation rules:
+    Implements 8 validation rules:
     - UNKNOWN_VENDOR (vendor-level)
     - SUSPICIOUS_VENDOR (vendor-level)
     - UNKNOWN_ITEM (line-item-level)
     - NEGATIVE_QTY (line-item-level)
     - EXCEEDS_STOCK (line-item-level)
     - OUT_OF_STOCK (line-item-level)
+    - PRICE_MISMATCH (line-item-level)
+    - LINE_ITEM_AMOUNT_MISMATCH (line-item-level)
 
     Populates ctx.validation_findings with structured findings.
     """
@@ -133,6 +133,47 @@ def validate_stage(ctx: PipelineContext) -> PipelineContext:
                     available_qty=stock,
                 )
             )
+
+        # Rule: PRICE_MISMATCH
+        db_price = item_info["unit_price"]
+        if (
+            line_item.unit_price is not None
+            and db_price is not None
+            and abs(line_item.unit_price - db_price) > 0.01
+        ):
+            findings.append(
+                ValidationFinding(
+                    code="PRICE_MISMATCH",
+                    severity="WARN",
+                    message=(
+                        f"Invoice price ${line_item.unit_price:.2f} "
+                        f"!= inventory price ${db_price:.2f} "
+                        f"for '{line_item.item}'"
+                    ),
+                    item_name=line_item.item,
+                    requested_qty=line_item.quantity,
+                )
+            )
+
+        # Rule: LINE_ITEM_AMOUNT_MISMATCH
+        if line_item.unit_price is not None and line_item.amount is not None:
+            expected = line_item.unit_price * line_item.quantity
+            if abs(line_item.amount - expected) > 0.01:
+                findings.append(
+                    ValidationFinding(
+                        code="LINE_ITEM_AMOUNT_MISMATCH",
+                        severity="WARN",
+                        message=(
+                            f"Line amount ${line_item.amount:.2f} "
+                            f"!= qty({line_item.quantity}) × "
+                            f"price(${line_item.unit_price:.2f}) "
+                            f"= ${expected:.2f} "
+                            f"for '{line_item.item}'"
+                        ),
+                        item_name=line_item.item,
+                        requested_qty=line_item.quantity,
+                    )
+                )
 
     ctx.validation_findings = findings
 

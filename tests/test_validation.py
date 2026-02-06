@@ -2,13 +2,15 @@
 """
 Unit tests for validation stage.
 
-Tests all 6 validation rules:
+Tests all 8 validation rules:
 - UNKNOWN_VENDOR (vendor-level)
 - SUSPICIOUS_VENDOR (vendor-level)
 - UNKNOWN_ITEM (line-item-level)
 - NEGATIVE_QTY (line-item-level)
 - EXCEEDS_STOCK (line-item-level)
 - OUT_OF_STOCK (line-item-level)
+- PRICE_MISMATCH (line-item-level)
+- LINE_ITEM_AMOUNT_MISMATCH (line-item-level)
 
 Uses in-memory SQLite DB with known test data for determinism.
 """
@@ -25,6 +27,9 @@ import pytest  # noqa: E402
 from agents.validate import validate_stage  # noqa: E402
 from db.inventory import init_database  # noqa: E402
 from models import Invoice, LineItem, PipelineContext  # noqa: E402
+
+# Tolerance used in price comparisons
+PRICE_TOLERANCE = 0.01
 
 # Known vendor from seed data (trusted)
 KNOWN_VENDOR = "Widgets Inc."
@@ -323,6 +328,134 @@ def test_mixed_valid_invalid_items(test_db):
     # Only 1 finding: UNKNOWN_ITEM (vendor is known)
     assert len(ctx.validation_findings) == 1
     assert ctx.validation_findings[0].code == "UNKNOWN_ITEM"
+
+
+# ------------------------------------------------------------------
+# Price / amount rules
+# ------------------------------------------------------------------
+
+
+def test_price_mismatch_triggers(test_db):
+    """PRICE_MISMATCH: Invoice price != DB price should WARN."""
+    # DB has WidgetA at $250.00; invoice says $300.00
+    invoice = make_test_invoice(
+        line_items=[],
+    )
+    invoice.line_items = [
+        LineItem(item="WidgetA", quantity=2, unit_price=300.00),
+    ]
+
+    ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
+    ctx = validate_stage(ctx)
+
+    price_findings = [f for f in ctx.validation_findings if f.code == "PRICE_MISMATCH"]
+    assert len(price_findings) == 1
+
+    finding = price_findings[0]
+    assert finding.severity == "WARN"
+    assert finding.item_name == "WidgetA"
+    assert "$300.00" in finding.message
+    assert "$250.00" in finding.message
+
+
+def test_price_match_no_finding(test_db):
+    """Matching price should produce no PRICE_MISMATCH."""
+    # DB has WidgetA at $250.00; invoice also says $250.00
+    invoice = make_test_invoice(line_items=[])
+    invoice.line_items = [
+        LineItem(item="WidgetA", quantity=2, unit_price=250.00),
+    ]
+
+    ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
+    ctx = validate_stage(ctx)
+
+    price_findings = [f for f in ctx.validation_findings if f.code == "PRICE_MISMATCH"]
+    assert len(price_findings) == 0
+
+
+def test_price_mismatch_skipped_when_no_invoice_price(test_db):
+    """No unit_price on line item should skip PRICE_MISMATCH."""
+    invoice = make_test_invoice(line_items=[])
+    invoice.line_items = [
+        LineItem(item="WidgetA", quantity=2, unit_price=None),
+    ]
+
+    ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
+    ctx = validate_stage(ctx)
+
+    price_findings = [f for f in ctx.validation_findings if f.code == "PRICE_MISMATCH"]
+    assert len(price_findings) == 0
+
+
+def test_line_item_amount_mismatch_triggers(test_db):
+    """LINE_ITEM_AMOUNT_MISMATCH: amount != qty*price should WARN."""
+    # qty=2, price=250, amount should be 500 but we say 600
+    invoice = make_test_invoice(line_items=[])
+    invoice.line_items = [
+        LineItem(
+            item="WidgetA",
+            quantity=2,
+            unit_price=250.00,
+            amount=600.00,
+        ),
+    ]
+
+    ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
+    ctx = validate_stage(ctx)
+
+    amt_findings = [
+        f for f in ctx.validation_findings if f.code == "LINE_ITEM_AMOUNT_MISMATCH"
+    ]
+    assert len(amt_findings) == 1
+
+    finding = amt_findings[0]
+    assert finding.severity == "WARN"
+    assert finding.item_name == "WidgetA"
+    assert "$600.00" in finding.message
+    assert "$500.00" in finding.message
+
+
+def test_line_item_amount_match_no_finding(test_db):
+    """Correct amount should produce no LINE_ITEM_AMOUNT_MISMATCH."""
+    # qty=2, price=250, amount=500 (correct)
+    invoice = make_test_invoice(line_items=[])
+    invoice.line_items = [
+        LineItem(
+            item="WidgetA",
+            quantity=2,
+            unit_price=250.00,
+            amount=500.00,
+        ),
+    ]
+
+    ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
+    ctx = validate_stage(ctx)
+
+    amt_findings = [
+        f for f in ctx.validation_findings if f.code == "LINE_ITEM_AMOUNT_MISMATCH"
+    ]
+    assert len(amt_findings) == 0
+
+
+def test_line_item_amount_skipped_when_no_amount(test_db):
+    """No amount on line item should skip LINE_ITEM_AMOUNT_MISMATCH."""
+    invoice = make_test_invoice(line_items=[])
+    invoice.line_items = [
+        LineItem(
+            item="WidgetA",
+            quantity=2,
+            unit_price=250.00,
+            amount=None,
+        ),
+    ]
+
+    ctx = PipelineContext(invoice_path="test.txt", invoice=invoice)
+    ctx = validate_stage(ctx)
+
+    amt_findings = [
+        f for f in ctx.validation_findings if f.code == "LINE_ITEM_AMOUNT_MISMATCH"
+    ]
+    assert len(amt_findings) == 0
 
 
 if __name__ == "__main__":
