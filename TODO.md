@@ -79,16 +79,20 @@
 - [x] Update README with setup instructions
 - [x] Add PDF support to run_samples.py
 
-## Slice 8: Polish + Documentation
+## Slice 8: Polish + Documentation ✓
 
-- [ ] Create "run all samples" helper script
-- [ ] Update README with setup instructions
-- [ ] Update README with command examples
-- [ ] Document assumptions and limitations
-- [ ] Add architecture overview to README
-- [ ] Tighten logs for readability
-- [ ] Review and clean up TODO comments
-- [ ] Final end-to-end test with all samples
+- [x] Create "run all samples" helper script (python main.py --run_all)
+- [x] Update README with setup instructions
+- [x] Update README with command examples
+- [x] Document assumptions and limitations
+- [x] Add architecture overview to README
+- [x] Tighten logs for readability (already production-shaped)
+- [x] Review and clean up TODO comments (removed from db/inventory.py, llm/client.py)
+- [x] Add --run_all flag to main.py for batch processing
+- [x] Make result saving default behavior (always saves to out/)
+- [x] Add comprehensive sections to README (Overview, How to Run, Architecture, etc.)
+- [x] Verify all tests pass (36/36 tests passing)
+- [x] Final end-to-end test with all samples
 
 ## Optional Enhancements (Above & Beyond)
 
@@ -103,5 +107,5 @@
 
 ---
 
-**Current Status:** Slice 7 complete ✓ | Ready for Slice 8 (Polish + Documentation)
-**Last Updated:** 2026-02-05 16:23
+**Current Status:** All slices complete ✓ | Production-ready prototype delivered
+**Last Updated:** 2026-02-05 16:48
