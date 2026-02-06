@@ -29,10 +29,10 @@
 - [x] Implement validation rule: negative_quantity
 - [x] Implement validation rule: quantity_exceeds_stock
 - [x] Implement validation rule: out_of_stock
-- [ ] Implement validation rule: price_mismatch (deferred to future slice)
+- [x] Implement validation rule: price_mismatch
 - [x] Implement validation rule: unknown_vendor
 - [x] Implement validation rule: suspicious_vendor
-- [ ] Implement validation rule: line_item_amount_mismatch (deferred to future slice)
+- [x] Implement validation rule: line_item_amount_mismatch
 - [x] Write unit tests for each validation rule
 - [ ] Integration test with sample invoices (requires ingestion - Slice 4)
 
@@ -108,4 +108,4 @@
 ---
 
 **Current Status:** All slices complete ✓ | Production-ready prototype delivered
-**Last Updated:** 2026-02-05 17:59
+**Last Updated:** 2026-02-05 18:05
