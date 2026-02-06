@@ -257,6 +257,51 @@ python main.py --invoice_path=data/invoices/invoice_1004.json
 
 ---
 
+## Run with Docker (Optional)
+
+Start the backend API with Docker Compose (no local Python setup needed):
+
+```bash
+# Build and start
+docker compose up --build
+
+# Backend available at http://localhost:8080
+```
+
+**Test it:**
+
+```bash
+# Health check
+curl http://localhost:8080/api/health
+
+# List sample invoices
+curl http://localhost:8080/api/samples
+
+# Process a sample invoice
+curl -X POST http://localhost:8080/api/process-sample \
+  -H "Content-Type: application/json" \
+  -d '{"sample_name": "invoice_1001.txt"}'
+
+# Upload a file
+curl -X POST http://localhost:8080/api/process \
+  -F "file=@data/invoices/invoice_1004.json"
+```
+
+**Volumes:**
+
+- `./data` is mounted read-only (sample invoices)
+- `./out` is mounted read-write (results persist on host)
+
+**Stop:**
+
+```bash
+docker compose down
+```
+
+> **Note:** Docker is optional. Local dev instructions above still work without Docker.
+
+---
+
 ## Next Steps (Production-Oriented)
 
 **Near-term (1-2 sprints):**
