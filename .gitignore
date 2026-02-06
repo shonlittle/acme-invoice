@@ -212,3 +212,7 @@ __marimo__/
 # Database files
 db/*.db
 inventory.db
+
+# Output
+out/*.json
+!out/.gitkeep
