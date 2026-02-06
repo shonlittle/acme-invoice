@@ -22,8 +22,8 @@ def init_database(db_path: str = "db/inventory.db") -> None:
     """
     Initialize the inventory database with schema and seed data.
 
-    Creates inventory.db if missing, creates tables (inventory, vendors) if they
-    don't exist, and seeds initial data only if tables are empty.
+    Creates inventory.db if missing, creates tables (inventory, vendors)
+    if they don't exist, and seeds initial data only if tables are empty.
 
     This function is idempotent - safe to call multiple times.
 
@@ -63,15 +63,14 @@ def get_item_info(item: str, db_path: str = "db/inventory.db") -> Optional[dict]
     Query inventory for an item.
 
     Returns dict with keys: item, stock, unit_price, category,
-    min_order_qty, max_order_qty, active
-    Returns None if item not found.
+    min_order_qty, max_order_qty, active. Returns None if not found.
     """
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT item, stock, unit_price, category, min_order_qty, max_order_qty, active "
-        "FROM inventory WHERE item = ?",
+        "SELECT item, stock, unit_price, category, min_order_qty, "
+        "max_order_qty, active FROM inventory WHERE item = ?",
         (item,),
     )
     row = cursor.fetchone()

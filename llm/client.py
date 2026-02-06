@@ -116,11 +116,20 @@ class LLMClient:
         # Detect reflection scenario
         if "contradiction" in content or "review" in content:
             if "approved despite" in content and "error" in content:
-                return "REVISED: Reject due to ERROR-level validation findings. Policy requires rejection when errors are present."
+                return (
+                    "REVISED: Reject due to ERROR-level validation findings. "
+                    "Policy requires rejection when errors are present."
+                )
             elif "missing scrutiny" in content or "high" in content:
-                return "REVISED: Add reason - High-value invoice requires additional review per policy."
+                return (
+                    "REVISED: Add reason - High-value invoice requires "
+                    "additional review per policy."
+                )
             elif "rejected without" in content:
-                return "REVISED: Add clear rejection reason based on validation findings or missing data."
+                return (
+                    "REVISED: Add clear rejection reason based on "
+                    "validation findings or missing data."
+                )
 
         # Default approval reasoning
-        return "Approved: All validation checks passed and invoice data is complete."
+        return "Approved: All validation checks passed and " "invoice data is complete."
