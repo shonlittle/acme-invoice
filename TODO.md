@@ -68,13 +68,16 @@
 - [x] Add PaymentResult model with audit trail
 - [x] Add payment metrics to run_samples.py
 
-## Slice 7: PDF Ingestion (Last)
+## Slice 7: PDF Ingestion (Last) ✓
 
-- [ ] Research minimal PDF text extraction library
-- [ ] Implement basic PDF text extraction
-- [ ] Reuse TXT parsing heuristics on extracted text
-- [ ] Test with sample PDFs (invoice_1011.pdf, etc.)
-- [ ] Document limitations in README
+- [x] Research minimal PDF text extraction library (PyPDF2)
+- [x] Implement basic PDF text extraction
+- [x] Reuse TXT parsing heuristics on extracted text
+- [x] Test with sample PDFs (invoice_1011.pdf, etc.)
+- [x] Document limitations in README
+- [x] Create requirements.txt with PyPDF2
+- [x] Update README with setup instructions
+- [x] Add PDF support to run_samples.py
 
 ## Slice 8: Polish + Documentation
 
@@ -100,5 +103,5 @@
 
 ---
 
-**Current Status:** Slice 6 complete ✓ | Ready for Slice 7 (PDF Ingestion)
-**Last Updated:** 2026-02-05 15:48
+**Current Status:** Slice 7 complete ✓ | Ready for Slice 8 (Polish + Documentation)
+**Last Updated:** 2026-02-05 16:23
