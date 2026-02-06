@@ -209,6 +209,14 @@ __marimo__/
 # Qodo folder
 .qodo/
 
+# Frontend (Node/React)
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+frontend/tsconfig.app.tsbuildinfo
+frontend/tsconfig.node.tsbuildinfo
+
 # Database files
 db/*.db
 inventory.db
