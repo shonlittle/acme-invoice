@@ -57,14 +57,16 @@
 - [x] Implement .env auto-loader (stdlib only)
 - [x] Add approval metrics to run_samples.py
 
-## Slice 6: Payment Stage
+## Slice 6: Payment Stage ✓
 
-- [ ] Implement mock_payment function
-- [ ] Gate payment on approval status
-- [ ] Log payment attempts
-- [ ] Log rejections with reasoning
-- [ ] Write tests for payment gating
-- [ ] Ensure no payment on rejected invoices
+- [x] Implement mock_payment function
+- [x] Gate payment on approval status
+- [x] Log payment attempts
+- [x] Log rejections with reasoning
+- [x] Write tests for payment gating (7 tests, all passing)
+- [x] Ensure no payment on rejected invoices
+- [x] Add PaymentResult model with audit trail
+- [x] Add payment metrics to run_samples.py
 
 ## Slice 7: PDF Ingestion (Last)
 
@@ -98,5 +100,5 @@
 
 ---
 
-**Current Status:** Slice 5 complete ✓ | Ready for Slice 6 (Payment)
-**Last Updated:** 2026-02-05 13:13
+**Current Status:** Slice 6 complete ✓ | Ready for Slice 7 (PDF Ingestion)
+**Last Updated:** 2026-02-05 15:48
