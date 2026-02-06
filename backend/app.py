@@ -192,11 +192,42 @@ def run_all_samples():
                 invoice_groups[group_key] = []
             invoice_groups[group_key].append(result)
 
+    # Post-processing: merge filename-based groups with invoice_number groups
+    # (e.g., merge "_nonum_invoice_1013" with "INV-1013" if both exist)
+    merged_groups = {}
+    for group_key, group in invoice_groups.items():
+        # Check if this is a filename-based group
+        if group_key.startswith("_nonum_"):
+            # Extract the base filename (e.g., "invoice_1013" from "_nonum_invoice_1013")
+            base_name = group_key.replace("_nonum_", "")
+
+            # Try to find a matching invoice_number group
+            # Look for groups that might contain the same invoice number
+            merged = False
+            for existing_key in list(merged_groups.keys()):
+                # Check if the filename contains digits that match the invoice number
+                # e.g., "invoice_1013" contains "1013" which matches "INV-1013"
+                if not existing_key.startswith("_nonum_"):
+                    # Extract digits from both
+                    filename_digits = "".join(filter(str.isdigit, base_name))
+                    existing_digits = "".join(filter(str.isdigit, existing_key))
+
+                    if filename_digits and filename_digits == existing_digits:
+                        # Merge this group into the existing one
+                        merged_groups[existing_key].extend(group)
+                        merged = True
+                        break
+
+            if not merged:
+                merged_groups[group_key] = group
+        else:
+            merged_groups[group_key] = group
+
     # Deduplicate: keep best format for each invoice
     results = []
     duplicate_groups = []
 
-    for inv_num, group in invoice_groups.items():
+    for inv_num, group in merged_groups.items():
         if len(group) > 1:
             # Found duplicates — keep best format
             group_sorted = sorted(
