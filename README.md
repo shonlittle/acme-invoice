@@ -24,10 +24,10 @@ This system automates the end-to-end invoice workflow with a **4-stage agentic p
 ### 1. Setup Virtual Environment
 
 ```bash
-python -m venv venv
-source venv/bin/activate  # On macOS/Linux
+python -m venv .venv
+source .venv/bin/activate  # On macOS/Linux
 # OR
-venv\Scripts\activate  # On Windows
+.venv\Scripts\activate  # On Windows
 ```
 
 ### 2. Install Dependencies
