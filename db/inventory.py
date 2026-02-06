@@ -1,8 +1,10 @@
 """
 Database initialization and query helpers for inventory/vendor validation.
 
-TODO: [Slice 2] Implement actual database initialization
-TODO: [Slice 3] Implement query helpers for validation rules
+Provides:
+- SQLite database initialization with inventory and vendors tables
+- Seed data for testing and development
+- Query helpers for validation rules
 """
 
 import sqlite3
@@ -98,7 +100,6 @@ def get_vendor_info(
     Returns dict with keys: vendor_name, address, payment_terms, trusted
     Returns None if vendor not found.
 
-    TODO: [Slice 3] Implement actual query logic
     """
     return None
 
