@@ -153,11 +153,7 @@ def run_all_samples():
     approved = sum(1 for r in results if r.get("approval_decision", {}).get("approved"))
     rejected = total - approved
     revised = sum(
-        1
-        for r in results
-        if r.get("approval_decision", {})
-        and r["approval_decision"].get("reflection", {})
-        and r["approval_decision"]["reflection"].get("revised")
+        1 for r in results if r.get("invoice", {}) and r["invoice"].get("revision")
     )
 
     findings_by_severity = {"ERROR": 0, "WARN": 0, "INFO": 0}
