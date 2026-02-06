@@ -98,17 +98,17 @@
 
 _This section is optional / above-and-beyond. It does not affect CLI functionality._
 
-### Backend (FastAPI)
+### Backend (FastAPI) ✓
 
-- [ ] Create backend/ directory with FastAPI app scaffold
-- [ ] Implement POST /api/process endpoint (file upload → run_pipeline)
-- [ ] Implement GET /api/samples endpoint (list data/invoices/)
-- [ ] Implement POST /api/process-sample endpoint (sample path → run_pipeline)
-- [ ] Implement GET /api/health endpoint
-- [ ] Add Pydantic response schemas matching PipelineResult
-- [ ] Add CORS middleware for local dev
-- [ ] Add backend/requirements.txt (fastapi, uvicorn, python-multipart)
-- [ ] Write backend smoke test
+- [x] Create backend/ directory with FastAPI app scaffold
+- [x] Implement POST /api/process endpoint (file upload → run_pipeline)
+- [x] Implement GET /api/samples endpoint (list data/invoices/)
+- [x] Implement POST /api/process-sample endpoint (sample path → run_pipeline)
+- [x] Implement GET /api/health endpoint
+- [x] Add Pydantic response schemas matching PipelineResult
+- [x] Add CORS middleware for local dev
+- [x] Add backend deps to requirements.txt (fastapi, uvicorn, python-multipart, httpx)
+- [x] Write backend smoke test (6 tests, all passing)
 
 ### Frontend (React + TypeScript)
 
@@ -141,4 +141,4 @@ _This section is optional / above-and-beyond. It does not affect CLI functionali
 ---
 
 **Current Status:** All slices complete ✓ | Production-ready prototype delivered
-**Last Updated:** 2026-02-05 18:20
+**Last Updated:** 2026-02-05 18:31
