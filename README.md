@@ -24,7 +24,7 @@ This system automates the end-to-end invoice workflow with a **4-stage agentic p
 ### 1. Setup Virtual Environment
 
 ```bash
-python3 -m venv venv
+python -m venv venv
 source venv/bin/activate  # On macOS/Linux
 # OR
 venv\Scripts\activate  # On Windows
@@ -36,24 +36,37 @@ venv\Scripts\activate  # On Windows
 pip install -r requirements.txt
 ```
 
-### 3. Initialize Database
+### 3. Database Setup
+
+The database auto-initializes with seed data on first pipeline run.
+
+**Optional manual initialization:**
 
 ```bash
-python3 db/inventory.py
+python db/inventory.py
 ```
+
+**First run behavior:**
+
+- Creates `db/inventory.db` with seed data
+- Adds 4 inventory items (WidgetA, WidgetB, GadgetX, FakeItem)
+- Adds 4 trusted vendors
+- Idempotent (safe to run multiple times)
 
 ### 4. Run Pipeline
 
 ```bash
 # Single invoice
-python3 main.py --invoice_path=data/invoices/invoice_1004.json
+python main.py --invoice_path=data/invoices/invoice_1004.json
 
-# All samples
-python3 scripts/run_samples.py
+# All samples (batch mode)
+python main.py --run_all
 
 # Tests
-python3 -m pytest tests/ -v
+pytest tests/ -v
 ```
+
+**Note:** Results are automatically saved to `out/<invoice_id>.json`
 
 ---
 
@@ -69,7 +82,7 @@ python3 -m pytest tests/ -v
 ### Key Capabilities
 
 - **Structured Logging** - Observable at every stage
-- **Deterministic Testing** - 24 unit tests (all passing)
+- **Deterministic Testing** - 36 unit tests (all passing)
 - **Graceful Degradation** - Never crashes, returns minimal data on error
 - **Optional LLM Integration** - Grok via xAI API (falls back to mock)
 - **Audit Trail** - Full provenance tracking and confidence scores
@@ -97,6 +110,12 @@ If PDF extraction fails or yields empty text, the pipeline continues with a mini
 python main.py --invoice_path=data/invoices/invoice_1004.json
 ```
 
+**Output:**
+
+- Structured logs to console
+- Final JSON result
+- Result saved to `out/<invoice_id>.json`
+
 ### All Sample Invoices (Batch Mode)
 
 ```bash
@@ -104,17 +123,23 @@ python main.py --run_all
 # Processes 19 invoices, saves JSON to out/
 ```
 
-**Alternative (same result):**
+**Alternative (equivalent result):**
 
 ```bash
 python scripts/run_samples.py
 ```
 
+**When to use which:**
+
+- `python main.py --run_all` — Built-in batch mode, part of main CLI
+- `python scripts/run_samples.py` — Standalone script, includes additional metrics table
+- Both process all invoices and save results to `out/`
+
 ### Run Tests
 
 ```bash
 pytest tests/ -v
-# 24 unit tests covering validation, approval, payment gating
+# 36 unit tests covering validation, approval, payment gating
 ```
 
 ---
@@ -226,7 +251,7 @@ python main.py --invoice_path=data/invoices/invoice_1004.json
 
 **Test Coverage:**
 
-- 24 unit tests covering core business logic
+- 36 unit tests covering core business logic
 - End-to-end integration tests via `python main.py --run_all`
 - No formal load/performance testing
 
@@ -259,7 +284,7 @@ python main.py --invoice_path=data/invoices/invoice_1004.json
 
 ## Test Coverage
 
-The system includes **24 unit tests** covering:
+The system includes **36 unit tests** covering:
 
 - Database initialization and seeding (idempotency, seed data)
 - Validation rules (unknown_item, negative_qty, exceeds_stock, out_of_stock)
@@ -294,13 +319,13 @@ main.py (CLI)
 
 ```bash
 # All tests
-python3 -m pytest tests/ -v
+pytest tests/ -v
 
 # Specific test files
-python3 -m pytest tests/test_ingestion.py -v
-python3 -m pytest tests/test_validation.py -v
-python3 -m pytest tests/test_approval.py -v
-python3 -m pytest tests/test_payment.py -v
+pytest tests/test_ingestion.py -v
+pytest tests/test_validation.py -v
+pytest tests/test_approval.py -v
+pytest tests/test_payment.py -v
 ```
 
 ---
