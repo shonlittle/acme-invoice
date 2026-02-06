@@ -165,19 +165,27 @@ def run_all_samples():
         return scores.get(ext, 0)
 
     # Group by invoice_number (with filename fallback for failed parsing)
+    # Revisions are treated as separate invoices, not duplicates
     invoice_groups = {}
     for result in all_results:
         invoice = result.get("invoice")
         if invoice and invoice.get("invoice_number"):
             # Primary: group by invoice_number
             inv_num = invoice["invoice_number"]
-            if inv_num not in invoice_groups:
-                invoice_groups[inv_num] = []
-            invoice_groups[inv_num].append(result)
+
+            # If invoice has a revision, treat it as a separate invoice
+            if invoice.get("revision"):
+                group_key = f"{inv_num}_rev_{invoice['revision']}"
+            else:
+                group_key = inv_num
+
+            if group_key not in invoice_groups:
+                invoice_groups[group_key] = []
+            invoice_groups[group_key].append(result)
         else:
-            # Fallback: group by filename pattern (e.g., invoice_1013.json + invoice_1013.pdf)
+            # Fallback: group by filename pattern
             filename = result["_filename"]
-            # Extract base name without extension (e.g., "invoice_1013" from "invoice_1013.json")
+            # Extract base name without extension
             base_name = Path(filename).stem
             group_key = f"_nonum_{base_name}"
             if group_key not in invoice_groups:
@@ -203,7 +211,10 @@ def run_all_samples():
                     "invoice_number": inv_num,
                     "files": [r["_filename"] for r in group],
                     "kept": best["_filename"],
-                    "reason": f"Preferred format: {Path(best['_filename']).suffix.upper()}",
+                    "reason": (
+                        f"Preferred format: "
+                        f"{Path(best['_filename']).suffix.upper()}"
+                    ),
                 }
             )
         else:
