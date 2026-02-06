@@ -1,0 +1,7 @@
+# Invoice Processing Pipeline - Dependencies
+
+# PDF text extraction (Slice 7)
+PyPDF2==3.0.1
+
+# Testing (optional - may already be system-installed)
+pytest==8.4.1
